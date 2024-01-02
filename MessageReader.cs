@@ -1,0 +1,65 @@
+using System.Text.RegularExpressions;
+
+namespace whatsapp_sender;
+
+public readonly struct MessageItem(int start, int stop, string message)
+{
+    public readonly int Start = start;
+    public readonly int Stop = stop;
+    public readonly string Message = message;
+
+    static int TimeToMinutes(DateTime time)
+    {
+        return time.Hour * 60 + time.Minute;
+    }
+
+    public bool CheckTime(DateTime time)
+    {
+        var timeMinutes = TimeToMinutes(time);
+        return Start <= timeMinutes && timeMinutes <= Stop;
+    }
+    
+    public override string ToString()
+    {
+        return $"{Start} {Stop} {Message}";
+    }
+}
+
+public class MessageReader
+{
+    private readonly Regex _regex = new(@"(\d\d:\d\d-\d\d:\d\d) (.+)");
+    public readonly List<MessageItem> MessageItems = new();
+
+    public MessageReader(string filename = "message.txt")
+    {
+        using var reader = new StreamReader(filename);
+        var text = reader.ReadToEnd();
+        ParseMessageFile(text);
+    }
+
+    private static int ParseTimeString(string timeString)
+    {
+        var s = timeString.Split(':');
+        var hour = Convert.ToInt32(s[0]);
+        var minutes = Convert.ToInt32(s[1]);
+        return hour * 60 + minutes;
+    }
+
+    private void ParseMessageFile(string text)
+    {
+        var split = text.Split("\n").Where(s => s.Length > 0);
+        foreach (var s in split)
+        {
+            var match = _regex.Match(s);
+            if (match.Groups.Count != 3) continue;
+            var times = match.Groups[1].ToString().Split("-").Select(ParseTimeString).ToArray();
+            MessageItems.Add(new MessageItem(times[0], times[1], match.Groups[2].ToString()));
+        }
+    }
+
+    public List<MessageItem> GetTimeNowItems()
+    {
+        var now = DateTime.Now;
+        return MessageItems.Where(s => s.CheckTime(now)).ToList();
+    }
+}

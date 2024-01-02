@@ -10,12 +10,12 @@ namespace whatsapp_sender;
 /// <summary>
 ///     Класс по работе с adb и whatsapp
 /// </summary>
-public class DeviceManager
+public class WhatsappSender
 {
     private readonly AdbClient _client = new();
     private readonly DeviceData _device;
 
-    public DeviceManager()
+    public WhatsappSender()
     {
         StartAdb();
         _device = GetDevice() ?? throw new Exception("Устройства не найдены");
