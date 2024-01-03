@@ -18,7 +18,7 @@ public readonly struct MessageItem(int start, int stop, string message)
         var timeMinutes = TimeToMinutes(time);
         return Start <= timeMinutes && timeMinutes <= Stop;
     }
-    
+
     public override string ToString()
     {
         return $"{Start} {Stop} {Message}";
@@ -57,9 +57,15 @@ public class MessageReader
         }
     }
 
-    public List<MessageItem> GetTimeNowItems()
+    public List<MessageItem>? GetTimeNowItems()
     {
         var now = DateTime.Now;
-        return MessageItems.Where(s => s.CheckTime(now)).ToList();
+        List<MessageItem>? items = MessageItems.Where(s => s.CheckTime(now)).ToList();
+        if (items.Count == 0)
+        {
+            items = null;
+        }
+
+        return items;
     }
 }

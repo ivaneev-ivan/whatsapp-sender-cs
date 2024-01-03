@@ -27,11 +27,12 @@ public class WhatsappSender
     /// </summary>
     private static void StartAdb()
     {
-        if (AdbServer.Instance.GetStatus().IsRunning) return;
         var server = new AdbServer();
+        // перезагрузка сервера adb
+        if (AdbServer.Instance.GetStatus().IsRunning) server.StopServer();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            var result = server.StartServer("adb.exe");
+            var result = server.StartServer(@"adb.exe");
             if (result != StartServerResult.Started) throw new Exception("Не получилось запустить adb");
         }
         else
@@ -40,6 +41,8 @@ public class WhatsappSender
             var proc = new Process { StartInfo = startInfo };
             proc.Start();
         }
+
+        Thread.Sleep(1000);
     }
 
     /// <summary>
@@ -63,6 +66,7 @@ public class WhatsappSender
 
         _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", _device);
         _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", _device);
+        Thread.Sleep(100);
     }
 
     /// <summary>
