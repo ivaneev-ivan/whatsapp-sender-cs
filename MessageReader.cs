@@ -71,11 +71,8 @@ public class MessageReader
     public string? GetRandomRandomizedMessage()
     {
         var messages = GetTimeNowItems();
-        if (messages == null)
-        {
-            Console.WriteLine("Сообщение не найдено");
-            return null;
-        }
-        return TextRandomize.HandleText(messages[_random.Next(messages.Count)].Message);
+        if (messages != null) return TextRandomize.HandleText(messages[_random.Next(messages.Count)].Message);
+        Console.WriteLine("Сообщение не найдено");
+        return null;
     }
 }
