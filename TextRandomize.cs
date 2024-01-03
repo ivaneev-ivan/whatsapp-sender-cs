@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace whatsapp_sender;
 
-class TextRandomize
+internal class TextRandomize
 {
     public List<object> Content = [];
 
@@ -21,26 +21,21 @@ class TextRandomize
     {
         Console.WriteLine(new string('\t', tab) + GetPureText());
         foreach (var obj in Content)
-        {
             if (obj is TextRandomize)
-            {
                 ((TextRandomize)obj).PrintTab(tab + 1);
-            }
-        }
     }
 
     public string MakeDecision()
     {
         List<int> highSigns = [];
         for (var i = 0; i < Content.Count; i++)
-        {
             if (Content[i] is TextRandomize)
             {
                 if (i >= 2 && Content[i - 1] as string == "!" && Content[i - 2] as string == "!")
                 {
                     highSigns.Add(i - 1);
                     highSigns.Add(i - 2);
-                    var answerString = ((TextRandomize)Content[i]).MakeDecision().ToString().ToCharArray();
+                    var answerString = ((TextRandomize)Content[i]).MakeDecision().ToCharArray();
                     try
                     {
                         answerString[0] = char.ToUpper(answerString[0]);
@@ -61,12 +56,8 @@ class TextRandomize
             {
                 Content[i] = Content[i].ToString();
             }
-        }
 
-        foreach (var highSign in highSigns.OrderByDescending(x => x))
-        {
-            Content.RemoveAt(highSign);
-        }
+        foreach (var highSign in highSigns.OrderByDescending(x => x)) Content.RemoveAt(highSign);
 
         var text = string.Concat(Content.OfType<string>());
         if (text[0] == '{')
@@ -93,7 +84,6 @@ class TextRandomize
         List<TextRandomize> nodeStack = [];
 
         foreach (var letter in text)
-        {
             switch (letter)
             {
                 case '{':
@@ -101,7 +91,7 @@ class TextRandomize
                 {
                     if (nodeStack.Count == 0)
                     {
-                        TextRandomize currentRandomize = new TextRandomize();
+                        var currentRandomize = new TextRandomize();
                         currentRandomize.Content.Add(letter);
                         startingNodes.Add(currentRandomize);
                         nodeStack.Add(currentRandomize);
@@ -120,10 +110,7 @@ class TextRandomize
                 case '}':
                 case ']':
                 {
-                    if (nodeStack.Count == 0)
-                    {
-                        throw new FormatException();
-                    }
+                    if (nodeStack.Count == 0) throw new FormatException();
 
                     var currentRandomize = nodeStack.Last();
                     currentRandomize.Content.Add(letter);
@@ -145,11 +132,9 @@ class TextRandomize
                     break;
                 }
             }
-        }
 
         var result = new StringBuilder();
         foreach (var node in startingNodes)
-        {
             switch (node)
             {
                 case string s:
@@ -185,12 +170,11 @@ class TextRandomize
                     break;
                 }
             }
-        }
 
-        int i = 1;
+        var i = 1;
         while (i < result.Length - 1)
         {
-            char letter = result[i];
+            var letter = result[i];
             if (new List<char> { '.', ',', ':', ';' }.Contains(letter))
             {
                 if (result[i - 1] == ' ')
@@ -230,10 +214,7 @@ class TextRandomize
         result = new StringBuilder(Regex.Replace(result.ToString(), " +", " "));
 
         var stringResult = result.ToString();
-        if (stringResult.Contains("<enter. enter") || stringResult.Contains("<send. button"))
-        {
-            stringResult += ">";
-        }
+        if (stringResult.Contains("<enter. enter") || stringResult.Contains("<send. button")) stringResult += ">";
 
         return stringResult;
     }

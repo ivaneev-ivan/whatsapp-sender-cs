@@ -27,7 +27,7 @@ public readonly struct MessageItem(int start, int stop, string message)
 
 public class MessageReader
 {
-    private readonly Random _random = new Random();
+    private readonly Random _random = new();
     private readonly Regex _regex = new(@"(\d\d:\d\d-\d\d:\d\d) (.+)");
     public List<MessageItem> MessageItems = new();
 

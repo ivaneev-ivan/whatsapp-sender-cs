@@ -39,10 +39,7 @@ public class WhatsappSender
         }
 
         var fileName = "/usr/bin/adb";
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            fileName = "adb.exe";
-        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "adb.exe";
 
         var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
         var proc = new Process { StartInfo = startInfo };

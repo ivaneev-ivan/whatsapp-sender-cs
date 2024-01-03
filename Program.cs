@@ -2,7 +2,7 @@
 
 public class TaskQueue
 {
-    private SemaphoreSlim semaphore;
+    private readonly SemaphoreSlim semaphore;
 
     public TaskQueue()
     {
@@ -39,15 +39,13 @@ public class TaskQueue
 internal class Program
 {
     [Obsolete("Obsolete")]
-    static async Task Main(string[] args)
+    private static async Task Main(string[] args)
     {
         var messageReader = new MessageReader();
         var message = messageReader.GetRandomRandomizedMessage();
-        if (message == null)
-        {
-            return;
-        }
-        WhatsappSender deviceManager = new WhatsappSender();
+        if (message == null) return;
+
+        var deviceManager = new WhatsappSender();
         await deviceManager.StopWhatsapp();
         await deviceManager.OpenChat("+79952680540");
         await deviceManager.GetMessageBox();
