@@ -8,7 +8,7 @@ public readonly struct MessageItem(int start, int stop, string message)
     public readonly int Stop = stop;
     public readonly string Message = message;
 
-    static int TimeToMinutes(DateTime time)
+    private static int TimeToMinutes(DateTime time)
     {
         return time.Hour * 60 + time.Minute;
     }
@@ -27,8 +27,9 @@ public readonly struct MessageItem(int start, int stop, string message)
 
 public class MessageReader
 {
+    private readonly Random _random = new Random();
     private readonly Regex _regex = new(@"(\d\d:\d\d-\d\d:\d\d) (.+)");
-    public readonly List<MessageItem> MessageItems = new();
+    public List<MessageItem> MessageItems = new();
 
     public MessageReader(string filename = "message.txt")
     {
@@ -55,17 +56,26 @@ public class MessageReader
             var times = match.Groups[1].ToString().Split("-").Select(ParseTimeString).ToArray();
             MessageItems.Add(new MessageItem(times[0], times[1], match.Groups[2].ToString()));
         }
+
+        MessageItems = MessageItems.OrderBy(s => s.Start).ToList();
     }
 
     public List<MessageItem>? GetTimeNowItems()
     {
         var now = DateTime.Now;
-        List<MessageItem>? items = MessageItems.Where(s => s.CheckTime(now)).ToList();
-        if (items.Count == 0)
-        {
-            items = null;
-        }
-
+        var items = MessageItems.Where(s => s.CheckTime(now)).ToList();
+        if (items.Count == 0) items = null;
         return items;
+    }
+
+    public string? GetRandomRandomizedMessage()
+    {
+        var messages = GetTimeNowItems();
+        if (messages == null)
+        {
+            Console.WriteLine("Сообщение не найдено");
+            return null;
+        }
+        return TextRandomize.HandleText(messages[_random.Next(messages.Count)].Message);
     }
 }

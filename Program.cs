@@ -7,18 +7,20 @@ internal class Program
     {
         var deviceManager = new WhatsappSender();
         var messageReader = new MessageReader();
-        var messages = messageReader.GetTimeNowItems();
-        if (messages == null)
+        var message = messageReader.GetRandomRandomizedMessage();
+        if (message == null)
         {
-            Console.WriteLine("Сообщение не найдено");
             return;
         }
-        Console.WriteLine(messages[0].Message);
-        deviceManager.StopWhatsapp();
-        deviceManager.OpenChat("+79952680540");
-        deviceManager.GetMessageBox();
-        deviceManager.SendText(messages[0].Message);
-        deviceManager.SendMessage();
-        deviceManager.Close();
+
+        while (true)
+        {
+            deviceManager.StopWhatsapp();
+            deviceManager.OpenChat("+79952680540");
+            deviceManager.GetMessageBox();
+            deviceManager.SendText(message);
+            deviceManager.SendMessage();
+            deviceManager.Close();
+        }
     }
 }

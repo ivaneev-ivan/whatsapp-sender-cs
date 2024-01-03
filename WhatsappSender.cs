@@ -30,18 +30,14 @@ public class WhatsappSender
         var server = new AdbServer();
         // перезагрузка сервера adb
         if (AdbServer.Instance.GetStatus().IsRunning) server.StopServer();
+        var fileName = "/usr/bin/adb";
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            var result = server.StartServer(@"adb.exe");
-            if (result != StartServerResult.Started) throw new Exception("Не получилось запустить adb");
+            fileName = "adb.exe";
         }
-        else
-        {
-            var startInfo = new ProcessStartInfo { FileName = "/usr/bin/adb", Arguments = "devices" };
-            var proc = new Process { StartInfo = startInfo };
-            proc.Start();
-        }
-
+        var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
+        var proc = new Process { StartInfo = startInfo };
+        proc.Start();
         Thread.Sleep(1000);
     }
 
@@ -75,8 +71,8 @@ public class WhatsappSender
     /// <param name="message">Сообщение, которое нужно написать</param>
     public void SendText(string message)
     {
-        _client.ExecuteRemoteCommand($"am broadcast -a ADB_INPUT_TEXT --es msg '{message}'", _device);
-        Thread.Sleep(100);
+        _client.ExecuteRemoteCommandAsync($"am broadcast -a ADB_INPUT_TEXT --es msg '{message}'", _device);
+        Thread.Sleep(1000);
     }
 
     /// <summary>
@@ -89,7 +85,7 @@ public class WhatsappSender
             "//node[@resource-id='com.whatsapp.w4b:id/conversation_entry_action_button']");
         if (sendButton == null) throw new Exception("Кнопка для отправки не найдена");
         sendButton.Click();
-        Thread.Sleep(100);
+        Thread.Sleep(1000);
     }
 
     /// <summary>
