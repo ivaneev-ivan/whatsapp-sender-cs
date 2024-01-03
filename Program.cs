@@ -2,7 +2,6 @@
 
 internal class Program
 {
-    [Obsolete("Obsolete")]
     private static async Task Main()
     {
         var messageReader = new MessageReader();
