@@ -11,13 +11,13 @@ public enum CommandType
 
 public struct TimeDelay(int start, int stop)
 {
-    private readonly Random _random = new Random();
+    private readonly Random _random = new();
     public int Start = start;
     public int Stop = stop;
 
-    public int GetDelay()
+    public readonly int GetDelay()
     {
-        return _random.Next(Start, Stop);
+        return _random.Next(Start, Stop + 1);
     }
 
     public override string ToString()
@@ -28,7 +28,7 @@ public struct TimeDelay(int start, int stop)
 
 public struct TextPartition(int start, int stop, string message)
 {
-    public TimeDelay Delay = new TimeDelay(start, stop);
+    public TimeDelay Delay = new(start, stop);
     public string Message = message;
 
     public static List<TextPartition> GetTextPartition(string message)
@@ -42,8 +42,8 @@ public struct TextPartition(int start, int stop, string message)
             var splitMessage = message.Split(matchString).ToList();
             var countSplit = Regex.Matches(message, matchString).Count;
             var mess = splitMessage[0];
-            int start = Convert.ToInt32(match.Groups[1].ToString());
-            int stop = Convert.ToInt32(match.Groups[2].ToString());
+            var start = Convert.ToInt32(match.Groups[1].ToString());
+            var stop = Convert.ToInt32(match.Groups[2].ToString());
             message = GetNewMessage(splitMessage, matchString, countSplit);
             parts.Add(new TextPartition(start, stop, mess));
         }
@@ -54,10 +54,10 @@ public struct TextPartition(int start, int stop, string message)
 
     public static string GetNewMessage(List<string> splitMessage, string matchString, int countSplit)
     {
-        string message = splitMessage[1];
+        var message = splitMessage[1];
         if (countSplit > 1)
         {
-            int i = 2;
+            var i = 2;
             List<string> a = new();
             while (i < splitMessage.Count())
             {
@@ -93,23 +93,18 @@ public struct TextPartitionWithCommand(string message, CommandType commandType)
             CommandType commandType;
             var matchString = match.ToString();
             if (matchString == "<send. button>")
-            {
                 commandType = CommandType.NewMessage;
-            }
             else if (matchString == "<shift. enter>")
-            {
                 commandType = CommandType.Enter;
-            }
             else
-            {
                 commandType = CommandType.None;
-            }
             var splitMessage = message.Split(matchString).ToList();
             var countSplit = Regex.Matches(message, matchString).Count;
             var mess = splitMessage[0];
             message = TextPartition.GetNewMessage(splitMessage, matchString, countSplit);
             parts.Add(new TextPartitionWithCommand(mess, commandType));
         }
+
         parts.Add(new TextPartitionWithCommand(message, CommandType.None));
         return parts;
     }

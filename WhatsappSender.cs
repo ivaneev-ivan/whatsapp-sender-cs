@@ -82,14 +82,12 @@ public class WhatsappSender
 
     public void SendEnter()
     {
-        _client.ExecuteRemoteCommand($"input keyevent 66", _device);
+        _client.ExecuteRemoteCommand("input keyevent 66", _device);
         Thread.Sleep(1000);
-        
     }
-    
+
     public void SendTypeWordText(string message)
     {
-        Random rand = new Random();
         var parts = TextPartition.GetTextPartition(message);
         foreach (var part in parts)
         {
@@ -97,22 +95,19 @@ public class WhatsappSender
             foreach (var textPartitionWithCommand in commandsParts)
             {
                 var words = textPartitionWithCommand.Message.Split(" ");
-                foreach (var w in words)
+                foreach (var w in words) SendText(w + " ");
+                switch (textPartitionWithCommand.CommandType)
                 {
-                    SendText(w + " ");
-                }
-
-                if (textPartitionWithCommand.CommandType == CommandType.NewMessage)
-                {
-                    SendMessage();
-                }
-                if (textPartitionWithCommand.CommandType == CommandType.Enter)
-                {
-                    SendEnter();
+                    case CommandType.NewMessage:
+                        SendMessage();
+                        break;
+                    case CommandType.Enter:
+                        SendEnter();
+                        break;
                 }
             }
-            var delay = rand.Next(part.Delay.Start, part.Delay.Stop+1);
-            Thread.Sleep(delay*1000);
+
+            Thread.Sleep(part.Delay.GetDelay() * 1000);
         }
     }
 

@@ -79,10 +79,7 @@ public class MessageReader
     public List<string> GetAllRandomizedMessages()
     {
         var randomized = new List<string>();
-        foreach (var item in MessageItems)
-        {
-            randomized.Add(TextRandomize.HandleText(item.Message));
-        }
+        foreach (var item in MessageItems) randomized.Add(TextRandomize.HandleText(item.Message));
 
         return randomized;
     }
