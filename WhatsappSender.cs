@@ -80,20 +80,38 @@ public class WhatsappSender
         Thread.Sleep(1000);
     }
 
+    public void SendEnter()
+    {
+        _client.ExecuteRemoteCommand($"input keyevent 66", _device);
+        Thread.Sleep(1000);
+        
+    }
+    
     public void SendTypeWordText(string message)
     {
         Random rand = new Random();
         var parts = TextPartition.GetTextPartition(message);
         foreach (var part in parts)
         {
-            var words = part.Message.Split(" ");
-            foreach (var w in words)
+            var commandsParts = TextPartitionWithCommand.GetTextPartitionWithCommand(part);
+            foreach (var textPartitionWithCommand in commandsParts)
             {
-                SendText(w + " ");
-            }
+                var words = textPartitionWithCommand.Message.Split(" ");
+                foreach (var w in words)
+                {
+                    SendText(w + " ");
+                }
 
+                if (textPartitionWithCommand.CommandType == CommandType.NewMessage)
+                {
+                    SendMessage();
+                }
+                if (textPartitionWithCommand.CommandType == CommandType.Enter)
+                {
+                    SendEnter();
+                }
+            }
             var delay = rand.Next(part.Delay.Start, part.Delay.Stop+1);
-            Console.WriteLine($"Sleep {delay}");
             Thread.Sleep(delay*1000);
         }
     }
@@ -150,7 +168,7 @@ public class WhatsappSender
     public Element GetMessageBox()
     {
         var messageBox = _client.FindElement(_device, "//node[@resource-id='com.whatsapp.w4b:id/entry']",
-            new TimeSpan(20));
+            new TimeSpan(10 * 10000000));
         if (messageBox == null) throw new Exception("Не удалось найти тект бокс");
         messageBox.Click();
         return messageBox;
