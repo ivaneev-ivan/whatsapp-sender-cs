@@ -74,35 +74,53 @@ public class WhatsappSender
     ///     Отправка сообщения с помощью модуля adbKeyboard
     /// </summary>
     /// <param name="message">Сообщение, которое нужно написать</param>
-    public async Task SendText(string message)
+    public void SendText(string message)
     {
-        await _client.ExecuteRemoteCommandAsync($"am broadcast -a ADB_INPUT_TEXT --es msg '{message}'", _device);
-        await Task.Delay(1000);
+        _client.ExecuteRemoteCommand($"am broadcast -a ADB_INPUT_TEXT --es msg '{message}'", _device);
+        Thread.Sleep(1000);
+    }
+
+    public void SendTypeWordText(string message)
+    {
+        Random rand = new Random();
+        var parts = TextPartition.GetTextPartition(message);
+        foreach (var part in parts)
+        {
+            var words = part.Message.Split(" ");
+            foreach (var w in words)
+            {
+                SendText(w + " ");
+            }
+
+            var delay = rand.Next(part.Delay.Start, part.Delay.Stop+1);
+            Console.WriteLine($"Sleep {delay}");
+            Thread.Sleep(delay*1000);
+        }
     }
 
     /// <summary>
     ///     Нажатие на кнопку откравки сообщения
     /// </summary>
     /// <exception cref="Exception">Если кнопка не будет найдена</exception>
-    public async Task SendMessage()
+    public void SendMessage()
     {
-        var sendButton = await _client.FindElementAsync(_device,
+        var sendButton = _client.FindElement(_device,
             "//node[@resource-id='com.whatsapp.w4b:id/conversation_entry_action_button']");
         if (sendButton == null) throw new Exception("Кнопка для отправки не найдена");
-        await sendButton.ClickAsync();
-        await Task.Delay(1000);
+        sendButton.Click();
+        Thread.Sleep(1000);
     }
 
     /// <summary>
     ///     Открытие чата в whatsapp по номеру телефона
     /// </summary>
     /// <param name="phone">Номер телефона</param>
-    public async Task OpenChat(string phone)
+    public void OpenChat(string phone)
     {
-        await _client.ExecuteRemoteCommandAsync(
+        _client.ExecuteRemoteCommand(
             $"am start -a android.intent.action.VIEW -d whatsapp://send?phone={phone}",
             _device);
-        await Task.Delay(1000);
+        Thread.Sleep(1000);
     }
 
     /// <summary>
@@ -118,10 +136,10 @@ public class WhatsappSender
     /// <summary>
     ///     Остановка приложения whatsapp
     /// </summary>
-    public async Task StopWhatsapp()
+    public void StopWhatsapp()
     {
-        await _client.StopAppAsync(_device, "com.whatsapp.w4b");
-        await Task.Delay(1000);
+        _client.StopApp(_device, "com.whatsapp.w4b");
+        Thread.Sleep(1000);
     }
 
     /// <summary>
@@ -129,20 +147,20 @@ public class WhatsappSender
     /// </summary>
     /// <returns>Message box</returns>
     /// <exception cref="Exception">Если не получилось получить message box</exception>
-    public async Task<Element> GetMessageBox()
+    public Element GetMessageBox()
     {
         var messageBox = _client.FindElement(_device, "//node[@resource-id='com.whatsapp.w4b:id/entry']",
-            new TimeSpan(10));
+            new TimeSpan(20));
         if (messageBox == null) throw new Exception("Не удалось найти тект бокс");
-        await messageBox.ClickAsync();
+        messageBox.Click();
         return messageBox;
     }
 
     /// <summary>
     ///     Действия, по возращению в исходный вид, до запуска программы
     /// </summary>
-    public Task Close()
+    public void Close()
     {
-        return _client.ExecuteRemoteCommandAsync("ime reset", _device);
+        _client.ExecuteRemoteCommand("ime reset", _device);
     }
 }

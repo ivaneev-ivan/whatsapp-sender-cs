@@ -75,4 +75,15 @@ public class MessageReader
         Console.WriteLine("Сообщение не найдено");
         return null;
     }
+
+    public List<string> GetAllRandomizedMessages()
+    {
+        var randomized = new List<string>();
+        foreach (var item in MessageItems)
+        {
+            randomized.Add(TextRandomize.HandleText(item.Message));
+        }
+
+        return randomized;
+    }
 }

@@ -2,18 +2,21 @@
 
 internal class Program
 {
-    private static async Task Main()
+    private static void Main()
     {
         var messageReader = new MessageReader();
+        // var message = messageReader.GetRandomRandomizedMessage();
         var message = messageReader.GetRandomRandomizedMessage();
         if (message == null) return;
-
         var deviceManager = new WhatsappSender();
-        await deviceManager.StopWhatsapp();
-        await deviceManager.OpenChat("+79952680540");
-        await deviceManager.GetMessageBox();
-        await deviceManager.SendText(message);
-        await deviceManager.SendMessage();
-        await deviceManager.Close();
+        while (true)
+        {
+            deviceManager.StopWhatsapp();
+            deviceManager.OpenChat("+79952680540");
+            deviceManager.GetMessageBox();
+            deviceManager.SendTypeWordText(message);
+            deviceManager.SendMessage();
+            // deviceManager.Close();
+        }
     }
 }
