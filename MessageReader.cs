@@ -8,10 +8,7 @@ public readonly struct MessageItem(int start, int stop, string message)
     public readonly int Stop = stop;
     public readonly string Message = message;
 
-    private static int TimeToMinutes(DateTime time)
-    {
-        return time.Hour * 60 + time.Minute;
-    }
+    public static int TimeToMinutes(DateTime time) => (time.Hour * 60) + time.Minute;
 
     public bool CheckTime(DateTime time)
     {
@@ -19,9 +16,30 @@ public readonly struct MessageItem(int start, int stop, string message)
         return Start <= timeMinutes && timeMinutes <= Stop;
     }
 
+    public bool CheckTimeShorter(DateTime time)
+    {
+        var timeMinutes = TimeToMinutes(time);
+        return Start > timeMinutes;
+    }
+
     public override string ToString()
     {
-        return $"{Start} {Stop} {Message}";
+        return $"{GetHumanTime(Start)} {GetHumanTime(Stop)} {Message}";
+    }
+
+    public string GetHumanTime(int minutes)
+    {
+        string h = (minutes / 60).ToString();
+        string m = (minutes % 60).ToString();
+        if (h.Length == 1)
+        {
+            h = "0" + h;
+        }
+        if (m.Length == 1)
+        {
+            m = "0" + m;
+        }
+        return $"{h}:{m}";
     }
 }
 
@@ -68,19 +86,78 @@ public class MessageReader
         return items;
     }
 
-    public string? GetRandomRandomizedMessage()
+    public MessageItem GetTimeShorterItem()
+    {
+        var now = DateTime.Now;
+        List<MessageItem> items = new();
+        foreach (var item in MessageItems)
+        {
+            if (item.CheckTimeShorter(now))
+            {
+                items.Add(item);
+            }
+        }
+        if (items.Count == 0)
+            return MessageItems[0];
+        return items[_random.Next(items.Count)];
+    }
+
+    private string RandomizeMessage(List<MessageItem> messages)
+    {
+        var message = TextRandomize.HandleText(messages[_random.Next(messages.Count)].Message);
+        if (message[message.Length - 1] == '>')
+        {
+            message = message.Substring(0, message.Length - 1);
+        }
+        return message;
+    }
+
+    private string RandomizeMessage(MessageItem messages)
+    {
+        var message = TextRandomize.HandleText(messages.Message);
+        if (message[message.Length - 1] == '>')
+        {
+            message = message.Substring(0, message.Length - 1);
+        }
+        return message;
+    }
+
+    public void PrintMessages()
+    {
+        foreach (var item in MessageItems)
+        {
+            Console.WriteLine(item);
+        }
+    }
+
+    public string GetRandomRandomizedMessage()
     {
         var messages = GetTimeNowItems();
-        if (messages != null) return TextRandomize.HandleText(messages[_random.Next(messages.Count)].Message);
-        Console.WriteLine("Сообщение не найдено");
-        return null;
+        if (messages != null)
+        {
+            return RandomizeMessage(messages);
+        }
+        Console.WriteLine("Для данного временного диапазона подходящих сообщений нет");
+        PrintMessages();
+        var message = GetTimeShorterItem();
+        DateTime now;
+        do
+        {
+            now = DateTime.Now;
+            for (var i = 60; i > 0; i--)
+            {
+                Console.Write($"Пауза {i} секунд       \r");
+                Thread.Sleep(1000);
+            }
+        }
+        while (!message.CheckTime(now));
+        return RandomizeMessage(message);
     }
 
     public List<string> GetAllRandomizedMessages()
     {
         var randomized = new List<string>();
         foreach (var item in MessageItems) randomized.Add(TextRandomize.HandleText(item.Message));
-
         return randomized;
     }
 }

@@ -1,9 +1,9 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.DeviceCommands;
 using AdvancedSharpAdbClient.DeviceCommands.Models;
 using AdvancedSharpAdbClient.Models;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace whatsapp_sender;
 
@@ -19,7 +19,6 @@ public class WhatsappSender
     {
         StartAdb();
         _device = GetDevice() ?? throw new Exception("Устройства не найдены");
-        InstallAdbKeyboard();
     }
 
     /// <summary>
@@ -39,8 +38,13 @@ public class WhatsappSender
         }
 
         var fileName = "/usr/bin/adb";
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "adb.exe";
-
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "platform-tools/adb.exe";
+        //var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "reconnect device" };
+        //var proc = new Process { StartInfo = startInfo };
+        //proc.Start();
+        //startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "kill-server" };
+        //proc = new Process { StartInfo = startInfo };
+        //proc.Start();
         var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
         var proc = new Process { StartInfo = startInfo };
         proc.Start();
@@ -50,11 +54,11 @@ public class WhatsappSender
     /// <summary>
     ///     Установка adb клавиатуры, если ее нет и установка ее, вместо обычной
     /// </summary>
-    private async void InstallAdbKeyboard()
+    public void InstallAdbKeyboard()
     {
         while (true)
         {
-            var version = await _client.GetPackageVersionAsync(_device, "com.android.adbkeyboard");
+            var version = _client.GetPackageVersion(_device, "com.android.adbkeyboard");
             if (version.VersionCode == 0)
             {
                 var manager = new PackageManager(_client, _device);
@@ -65,9 +69,8 @@ public class WhatsappSender
                 break;
             }
         }
-
-        await _client.ExecuteRemoteCommandAsync("ime enable com.android.adbkeyboard/.AdbIME", _device);
-        await _client.ExecuteRemoteCommandAsync("ime set com.android.adbkeyboard/.AdbIME", _device);
+        _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", _device);
+        _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", _device);
     }
 
     /// <summary>
@@ -95,7 +98,17 @@ public class WhatsappSender
             foreach (var textPartitionWithCommand in commandsParts)
             {
                 var words = textPartitionWithCommand.Message.Split(" ");
-                foreach (var w in words) SendText(w + " ");
+                int i = 0;
+                foreach (var w in words)
+                {
+                    string a = "";
+                    if (i + 1 != words.Count())
+                    {
+                        a = " ";
+                    }
+                    SendText(w + a);
+                    i++;
+                };
                 switch (textPartitionWithCommand.CommandType)
                 {
                     case CommandType.NewMessage:
@@ -106,8 +119,7 @@ public class WhatsappSender
                         break;
                 }
             }
-
-            Thread.Sleep(part.Delay.GetDelay() * 1000);
+            Thread.Sleep(part.Delay.GetDelay());
         }
     }
 
@@ -140,10 +152,22 @@ public class WhatsappSender
     ///     Получение мобильного телефона
     /// </summary>
     /// <returns>Мобильный телефон</returns>
-    private DeviceData? GetDevice()
+    private DeviceData? GetDevice(int depth = 0)
     {
-        var device = _client.GetDevices().FirstOrDefault();
-        return device;
+        try
+        {
+            var device = _client.GetDevices().FirstOrDefault();
+            return device;
+        }
+        catch (Exception)
+        {
+            if (depth == 2)
+            {
+                throw new Exception("Не удалось найти устройство");
+            }
+            StartAdb();
+            return GetDevice(depth + 1);
+        }
     }
 
     /// <summary>
@@ -175,5 +199,29 @@ public class WhatsappSender
     public void Close()
     {
         _client.ExecuteRemoteCommand("ime reset", _device);
+    }
+
+    public string SendToPhone(UserData data, string message, ExcelReader reader)
+    {
+        bool isSent = false;
+        InstallAdbKeyboard();
+        StopWhatsapp();
+        OpenChat(data.Phone);
+        _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", _device);
+        _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", _device);
+        try
+        {
+            GetMessageBox();
+            SendTypeWordText(message);
+            SendMessage();
+            isSent = true;
+        }
+        catch (Exception)
+        {
+            //
+        }
+        var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent");
+        Close();
+        return status;
     }
 }

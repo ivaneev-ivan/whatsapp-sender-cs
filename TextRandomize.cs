@@ -88,49 +88,49 @@ internal class TextRandomize
             {
                 case '{':
                 case '[':
-                {
-                    if (nodeStack.Count == 0)
                     {
-                        var currentRandomize = new TextRandomize();
-                        currentRandomize.Content.Add(letter);
-                        startingNodes.Add(currentRandomize);
-                        nodeStack.Add(currentRandomize);
-                    }
-                    else
-                    {
-                        var currentRandomize = nodeStack.Last();
-                        currentRandomize.Content.Add(new TextRandomize());
-                        currentRandomize = (TextRandomize)currentRandomize.Content.Last();
-                        nodeStack.Add(currentRandomize);
-                        currentRandomize.Content.Add(letter);
-                    }
+                        if (nodeStack.Count == 0)
+                        {
+                            var currentRandomize = new TextRandomize();
+                            currentRandomize.Content.Add(letter);
+                            startingNodes.Add(currentRandomize);
+                            nodeStack.Add(currentRandomize);
+                        }
+                        else
+                        {
+                            var currentRandomize = nodeStack.Last();
+                            currentRandomize.Content.Add(new TextRandomize());
+                            currentRandomize = (TextRandomize)currentRandomize.Content.Last();
+                            nodeStack.Add(currentRandomize);
+                            currentRandomize.Content.Add(letter);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case '}':
                 case ']':
-                {
-                    if (nodeStack.Count == 0) throw new FormatException();
-
-                    var currentRandomize = nodeStack.Last();
-                    currentRandomize.Content.Add(letter);
-                    nodeStack.RemoveAt(nodeStack.Count - 1);
-                    break;
-                }
-                default:
-                {
-                    if (nodeStack.Count != 0)
                     {
+                        if (nodeStack.Count == 0) throw new FormatException();
+
                         var currentRandomize = nodeStack.Last();
                         currentRandomize.Content.Add(letter);
+                        nodeStack.RemoveAt(nodeStack.Count - 1);
+                        break;
                     }
-                    else
+                default:
                     {
-                        startingNodes.Add(letter.ToString());
-                    }
+                        if (nodeStack.Count != 0)
+                        {
+                            var currentRandomize = nodeStack.Last();
+                            currentRandomize.Content.Add(letter);
+                        }
+                        else
+                        {
+                            startingNodes.Add(letter.ToString());
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
 
         var result = new StringBuilder();
@@ -141,34 +141,34 @@ internal class TextRandomize
                     result.Append(s);
                     break;
                 case TextRandomize randomize:
-                {
-                    if (startingNodes.IndexOf(randomize) < 2)
                     {
-                        result.Append(randomize.MakeDecision());
-                    }
-                    else if (startingNodes[startingNodes.IndexOf(randomize) - 1] as string == "!" &&
-                             startingNodes[startingNodes.IndexOf(randomize) - 2] as string == "!")
-                    {
-                        result.Remove(result.Length - 2, 2);
-                        var answerString = randomize.MakeDecision().ToCharArray();
-                        try
+                        if (startingNodes.IndexOf(randomize) < 2)
                         {
-                            answerString[0] = char.ToUpper(answerString[0]);
+                            result.Append(randomize.MakeDecision());
                         }
-                        catch (Exception)
+                        else if (startingNodes[startingNodes.IndexOf(randomize) - 1] as string == "!" &&
+                                 startingNodes[startingNodes.IndexOf(randomize) - 2] as string == "!")
                         {
-                            // ignored
+                            result.Remove(result.Length - 2, 2);
+                            var answerString = randomize.MakeDecision().ToCharArray();
+                            try
+                            {
+                                answerString[0] = char.ToUpper(answerString[0]);
+                            }
+                            catch (Exception)
+                            {
+                                // ignored
+                            }
+
+                            result.Append(new string(answerString));
+                        }
+                        else
+                        {
+                            result.Append(randomize.MakeDecision());
                         }
 
-                        result.Append(new string(answerString));
+                        break;
                     }
-                    else
-                    {
-                        result.Append(randomize.MakeDecision());
-                    }
-
-                    break;
-                }
             }
 
         var i = 1;
@@ -214,7 +214,10 @@ internal class TextRandomize
         result = new StringBuilder(Regex.Replace(result.ToString(), " +", " "));
 
         var stringResult = result.ToString();
-        if (stringResult.Contains("<enter. enter") || stringResult.Contains("<send. button")) stringResult += ">";
+        if (stringResult.Contains("<enter. enter") || stringResult.Contains("<send. button"))
+        {
+            stringResult += ">";
+        }
 
         return stringResult;
     }

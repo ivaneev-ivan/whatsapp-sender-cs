@@ -9,22 +9,7 @@ public enum CommandType
     None = 2
 }
 
-public struct TimeDelay(int start, int stop)
-{
-    private readonly Random _random = new();
-    public int Start = start;
-    public int Stop = stop;
 
-    public readonly int GetDelay()
-    {
-        return _random.Next(Start, Stop + 1);
-    }
-
-    public override string ToString()
-    {
-        return $"{Start}-{Stop}";
-    }
-}
 
 public struct TextPartition(int start, int stop, string message)
 {
