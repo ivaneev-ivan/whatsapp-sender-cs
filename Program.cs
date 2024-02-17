@@ -1,4 +1,5 @@
-﻿using OfficeOpenXml;
+﻿using System.Text;
+using OfficeOpenXml;
 
 namespace whatsapp_sender;
 
@@ -16,6 +17,8 @@ internal static class Program
     }
     private static void Main()
     {
+        Console.InputEncoding = Encoding.UTF8;
+        Console.OutputEncoding = Encoding.UTF8;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         MessageReader messageReader;
         ExcelReader exelReader = new("base.xlsx");
@@ -38,14 +41,15 @@ internal static class Program
                 messageReader = new();
                 string message = messageReader.GetRandomRandomizedMessage();
                 message = message.Replace("<name>", data.Name).Trim();
-                Console.Write($"\r{data.Phone}: {message}");
+                Console.WriteLine(message);
+                Console.Write(data.Phone);
                 var spaces = "";
                 for (int i = 0; i < message.Count(); i++)
                 {
                     spaces += " ";
                 }
                 var status = deviceManager.SendToPhone(data, message, exelReader);
-                Console.Write($"\r{data.Phone}: {message}: {status}\r\n");
+                Console.Write($"\r{data.Phone}: {status}\r\n");
                 int sleep = delay.GetDelay();
                 Console.Write("Программы и консультации по рассылкам в WhatsApp admin1.ru / +79219114848\n");
                 for (var i = sleep / 1000; i > 0; i--)
