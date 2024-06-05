@@ -18,11 +18,21 @@ internal static class ConfigManager
         return new TimeDelay(start: item["StartDelay"], stop: item["StopDelay"]);
     }
 
-    private class Item(int startDelay, int stopDelay)
+    public static void WriteDevicesToConfig(IEnumerable<DeviceItem> devices)
     {
-        public int StartDelay = startDelay;
-        public int StopDelay = stopDelay;
+        var data = "";
+        foreach (var device in devices)
+        {
+            data += device.ToString() + "\n";
+        }
+
+        if (data[data.Length - 1] == '\n')
+        {
+            data = data.Substring(0, data.Length - 1);
+        }
+        File.WriteAllText("devices.txt",data);
     }
+    
 }
 
 class ConfigNotFound : Exception

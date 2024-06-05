@@ -170,6 +170,17 @@ public class WhatsappSender
         }
     }
 
+    public List<DeviceItem> GetAllDevicesToConfig()
+    {
+        List<DeviceItem> result = new();
+        var devices = _client.GetDevices();
+        foreach (var device in devices)
+        {
+            result.Add(new DeviceItem(device.Model, device.Serial));
+        }
+        return result;
+    }
+
     /// <summary>
     ///     Остановка приложения whatsapp
     /// </summary>

@@ -24,6 +24,9 @@ internal static class Program
         ExcelReader exelReader = new("base.xlsx");
         TimeDelay delay = ConfigManager.ReadConfigFile();
         WhatsappSender deviceManager = new();
+        var devices = deviceManager.GetAllDevicesToConfig();
+        ConfigManager.WriteDevicesToConfig(devices);
+        Console.WriteLine("Получил и записал список всех устройств");
         UserData data;
         while (true)
         {
