@@ -5,7 +5,7 @@ public struct DeviceItem (string model, string name)
     public string Model = model;
     public string Name = name;
 
-    public string ToString()
+    public override string ToString()
     {
         return $"{Model}:{Name}";
     }

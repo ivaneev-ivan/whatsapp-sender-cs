@@ -1,3 +1,4 @@
+#nullable enable
 using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.DeviceCommands;
 using AdvancedSharpAdbClient.DeviceCommands.Models;
@@ -7,20 +8,54 @@ using System.Runtime.InteropServices;
 
 namespace whatsapp_sender;
 
+
+public struct Worker(DeviceItem device, Thread thread)
+{
+    public DeviceItem DeviceItem = device;
+    public Thread Thread = thread;
+}
+
 /// <summary>
 ///     Класс по работе с adb и whatsapp
 /// </summary>
 public class WhatsappSender
 {
     private readonly AdbClient _client = new();
-    private readonly DeviceData _device;
+    public static List<Worker> Workers = [];
+    public static List<DeviceItem> Devices = [];
+    
 
     public WhatsappSender()
     {
         StartAdb();
-        _device = GetDevice() ?? throw new Exception("Устройства не найдены");
+        Devices = ConfigManager.GetDevicesFromConfig();
+        if (Devices.Count == 0)
+        {
+            Devices = GetAllDevicesToConfig();
+            if (Devices.Count == 0)
+            {
+                Console.WriteLine("Устройства не найдены");
+                return;
+            }
+            ConfigManager.WriteDevicesToConfig(Devices);
+        }
+        Console.WriteLine("Получил и записал список всех устройств");
     }
 
+    public DeviceData? GetClient(DeviceItem data)
+    {
+        var devices = _client.GetDevices();
+        foreach (var device in devices)
+        {
+            if (device.Serial == data.Name)
+            {
+                return device;
+            } 
+        }
+
+        return null;
+    }
+    
     /// <summary>
     ///     Метод по запуску adb
     /// </summary>
@@ -54,14 +89,14 @@ public class WhatsappSender
     /// <summary>
     ///     Установка adb клавиатуры, если ее нет и установка ее, вместо обычной
     /// </summary>
-    public void InstallAdbKeyboard()
+    private void InstallAdbKeyboard(DeviceData device)
     {
         while (true)
         {
-            var version = _client.GetPackageVersion(_device, "com.android.adbkeyboard");
+            var version = _client.GetPackageVersion(device, "com.android.adbkeyboard");
             if (version.VersionCode == 0)
             {
-                var manager = new PackageManager(_client, _device);
+                var manager = new PackageManager(_client, device);
                 manager.InstallPackage(@"ADBKeyboard.apk", _ => { });
             }
             else
@@ -69,27 +104,28 @@ public class WhatsappSender
                 break;
             }
         }
-        _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", _device);
-        _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", _device);
+        _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", device);
+        _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", device);
     }
 
     /// <summary>
     ///     Отправка сообщения с помощью модуля adbKeyboard
     /// </summary>
+    /// <param name="device">Устройство</param>
     /// <param name="message">Сообщение, которое нужно написать</param>
-    public void SendText(string message)
+    private void SendText(DeviceData device, string message)
     {
-        _client.ExecuteRemoteCommand($"am broadcast -a ADB_INPUT_TEXT --es msg '{message}'", _device);
+        _client.ExecuteRemoteCommand($"am broadcast -a ADB_INPUT_TEXT --es msg '{message}'", device);
         Thread.Sleep(1000);
     }
 
-    public void SendEnter()
+    private void SendEnter(DeviceData device)
     {
-        _client.ExecuteRemoteCommand("input keyevent 66", _device);
+        _client.ExecuteRemoteCommand("input keyevent 66", device);
         Thread.Sleep(1000);
     }
 
-    public void SendTypeWordText(string message)
+    private void SendTypeWordText(DeviceData device, string message)
     {
         var parts = TextPartition.GetTextPartition(message);
         foreach (var part in parts)
@@ -106,17 +142,21 @@ public class WhatsappSender
                     {
                         a = " ";
                     }
-                    SendText(w + a);
+                    SendText(device, w + a);
                     i++;
                 };
                 switch (textPartitionWithCommand.CommandType)
                 {
                     case CommandType.NewMessage:
-                        SendMessage();
+                        SendMessage(device);
                         break;
                     case CommandType.Enter:
-                        SendEnter();
+                        SendEnter(device);
                         break;
+                    case CommandType.None:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
             Thread.Sleep(part.Delay.GetDelay());
@@ -127,9 +167,9 @@ public class WhatsappSender
     ///     Нажатие на кнопку откравки сообщения
     /// </summary>
     /// <exception cref="Exception">Если кнопка не будет найдена</exception>
-    public void SendMessage()
+    private void SendMessage(DeviceData device)
     {
-        var sendButton = _client.FindElement(_device,
+        var sendButton = _client.FindElement(device,
             "//node[@resource-id='com.whatsapp.w4b:id/conversation_entry_action_button']");
         if (sendButton == null) throw new Exception("Кнопка для отправки не найдена");
         sendButton.Click();
@@ -140,11 +180,11 @@ public class WhatsappSender
     ///     Открытие чата в whatsapp по номеру телефона
     /// </summary>
     /// <param name="phone">Номер телефона</param>
-    public void OpenChat(string phone)
+    private void OpenChat(DeviceData device, string phone)
     {
         _client.ExecuteRemoteCommand(
             $"am start -a android.intent.action.VIEW -d whatsapp://send?phone={phone}",
-            _device);
+            device);
         Thread.Sleep(1000);
     }
 
@@ -152,7 +192,7 @@ public class WhatsappSender
     ///     Получение мобильного телефона
     /// </summary>
     /// <returns>Мобильный телефон</returns>
-    private DeviceData? GetDevice(int depth = 0)
+    public DeviceData? GetDevice(int depth = 0)
     {
         try
         {
@@ -184,9 +224,9 @@ public class WhatsappSender
     /// <summary>
     ///     Остановка приложения whatsapp
     /// </summary>
-    public void StopWhatsapp()
+    public void StopWhatsapp(DeviceData device)
     {
-        _client.StopApp(_device, "com.whatsapp.w4b");
+        _client.StopApp(device, "com.whatsapp.w4b");
         Thread.Sleep(1000);
     }
 
@@ -195,44 +235,54 @@ public class WhatsappSender
     /// </summary>
     /// <returns>Message box</returns>
     /// <exception cref="Exception">Если не получилось получить message box</exception>
-    public Element GetMessageBox()
+    private void GetMessageBox(DeviceData device)
     {
-        var messageBox = _client.FindElement(_device, "//node[@resource-id='com.whatsapp.w4b:id/entry']",
+        var messageBox = _client.FindElement(device, "//node[@resource-id='com.whatsapp.w4b:id/entry']",
             new TimeSpan(10 * 10000000));
         if (messageBox == null) throw new Exception("Не удалось найти тект бокс");
         messageBox.Click();
-        return messageBox;
     }
 
     /// <summary>
     ///     Действия, по возращению в исходный вид, до запуска программы
     /// </summary>
-    public void Close()
+    private void Close(DeviceData device)
     {
-        _client.ExecuteRemoteCommand("ime reset", _device);
+        _client.ExecuteRemoteCommand("ime reset", device);
     }
 
-    public string SendToPhone(UserData data, string message, ExcelReader reader)
+    public string SendToPhone(DeviceData device, UserData data, string message, ExcelReader reader)
     {
-        bool isSent = false;
-        InstallAdbKeyboard();
-        StopWhatsapp();
-        OpenChat(data.Phone);
-        _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", _device);
-        _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", _device);
+        var isSent = false;
+        InstallAdbKeyboard(device);
+        StopWhatsapp(device);
+        OpenChat(device,data.Phone);
+        _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", device);
+        _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", device);
         try
         {
-            GetMessageBox();
-            SendTypeWordText(message);
-            SendMessage();
+            GetMessageBox(device);
+            SendTypeWordText(device, message);
+            SendMessage(device);
             isSent = true;
         }
         catch (Exception)
         {
             //
         }
-        var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent");
-        Close();
-        return status;
+
+        while (true)
+        {
+            try
+            {
+                var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent");
+                Close(device);
+                return status;
+            }
+            catch (Exception e)
+            {
+                Thread.Sleep(1000);
+            }    
+        }
     }
 }

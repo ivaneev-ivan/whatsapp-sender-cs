@@ -5,70 +5,83 @@ namespace whatsapp_sender;
 
 internal static class Program
 {
-    static void WriteLine(string s)
+    private static Thread GetThread(DeviceItem device, WhatsappSender sender, ExcelReader excelReader)
     {
-        for (int i = 0; i < s.Length; i++)
-        {
-            if (i != 0 && i % 8 == 0)
-                Console.WriteLine();
-            Console.Write(s[i]);
-        }
-        Console.WriteLine();
+        return new Thread(() => StartSendingWithPhone(device, sender, excelReader));
     }
     private static void Main()
     {
         Console.InputEncoding = Encoding.UTF8;
         Console.OutputEncoding = Encoding.UTF8;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        MessageReader messageReader;
-        ExcelReader exelReader = new("base.xlsx");
-        TimeDelay delay = ConfigManager.ReadConfigFile();
+        ExcelReader excelReader = new("base.xlsx");
         WhatsappSender deviceManager = new();
-        var devices = deviceManager.GetAllDevicesToConfig();
-        ConfigManager.WriteDevicesToConfig(devices);
-        Console.WriteLine("Получил и записал список всех устройств");
-        UserData data;
-        while (true)
+        
+        foreach (var client in WhatsappSender.Devices)
         {
-            try
+            var thread = GetThread(client, deviceManager, excelReader);
+            WhatsappSender.Workers.Add(new Worker(client, thread));
+            thread.Start();
+        }
+        
+        while (ExcelReader.Phones.Count != 0 && WhatsappSender.Workers.Count != 0)
+        {
+            for (int i = 0; i < WhatsappSender.Workers.Count; i++)
             {
-                data = exelReader.GetPhoneNumber();
-            }
-            catch (PhoneNotFound)
-            {
-                break;
-            }
-            bool isPhone = PhoneNumberChecker.Check(data.Phone);
-            if (isPhone && data.Phone.Length >= 11)
-            {
-                messageReader = new();
-                string message = messageReader.GetRandomRandomizedMessage();
-                message = message.Replace("<name>", data.Name).Trim();
-                Console.WriteLine(message);
-                Console.Write(data.Phone);
-                var spaces = "";
-                for (int i = 0; i < message.Count(); i++)
+                try
                 {
-                    spaces += " ";
+                    var worker = WhatsappSender.Workers[i];
+                    if (!worker.Thread.IsAlive)
+                    {
+                        WhatsappSender.Workers.Remove(worker);
+                        var thread = GetThread(worker.DeviceItem, deviceManager, excelReader);
+                        WhatsappSender.Workers.Add(new Worker(worker.DeviceItem, thread));
+                        thread.Start();
+                    }
                 }
-                var status = deviceManager.SendToPhone(data, message, exelReader);
-                Console.Write($"\r{data.Phone}: {status}\r\n");
-                int sleep = delay.GetDelay();
-                Console.Write("Программы и консультации по рассылкам в WhatsApp admin1.ru / +79219114848\n");
-                for (var i = sleep / 1000; i > 0; i--)
+                catch (ArgumentOutOfRangeException)
                 {
-                    Console.Write($"Пауза {i} секунд       \r");
-                    Thread.Sleep(1000);
+                    //
                 }
-            }
-            else
-            {
-                Console.Write($"\r{data.Phone}: badnumber\r\n");
-                exelReader.WriteStatusPhone(data, "badnumber");
             }
         }
         Console.WriteLine("Рассылка завершена");
         Console.Write("Для закрытия консоли нажмите любую клавишу . . .");
         Console.ReadLine();
+    }
+
+    private static string GetMessage(UserData data)
+    {
+        MessageReader messageReader = new();
+        var message = messageReader.GetRandomRandomizedMessage();
+        message = message.Replace("<name>", data.Name).Trim();
+        return message;
+    }
+
+    private static void StartSendingWithPhone(DeviceItem device, WhatsappSender sender, ExcelReader reader)
+    {
+        TimeDelay delay = ConfigManager.ReadConfigFile();
+        var client = sender.GetClient(device);
+        if (client is null)
+        {
+            var find = WhatsappSender.Workers.Find(worker => worker.DeviceItem.Name == device.Name);
+            WhatsappSender.Workers.Remove(find);
+            WhatsappSender.Devices.Remove(device);
+            Console.WriteLine($"Устройство не найдено {device.ToString()}");
+            ConfigManager.WriteDevicesToConfig(WhatsappSender.Devices);
+            return;
+        }
+        var phone = ExcelReader.Phones.First();
+        ExcelReader.Phones.Remove(phone);
+        var message = GetMessage(phone);
+        var status = sender.SendToPhone(client, phone, message, reader);
+        Console.Write($"\r{device.ToString()} {phone.Phone}: {status}\r\n");
+        int sleep = delay.GetDelay();
+        Console.Write("Программы и консультации по рассылкам в WhatsApp admin1.ru / +79219114848\n");
+        for (var i = sleep / 1000; i > 0; i--)
+        {
+            Console.Write($"Пауза {i} секунд       \r");
+            Thread.Sleep(1000);
+        }
     }
 }
