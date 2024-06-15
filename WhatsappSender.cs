@@ -100,7 +100,7 @@ public class WhatsappSender
             string copyFolderPath = "platform-tools";
             if (device != null)
             {
-                copyFolderPath = $"platform-tools-{device}";
+                copyFolderPath = $"platform-tools-{((DeviceItem)device).Name}";
                 if (!Directory.Exists(copyFolderPath))
                 {
                     CopyFilesRecursively("platform-tools", copyFolderPath);
