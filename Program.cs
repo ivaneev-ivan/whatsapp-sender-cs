@@ -5,9 +5,9 @@ namespace whatsapp_sender;
 
 internal static class Program
 {
-    private static Thread GetThread(DeviceItem device, WhatsappSender sender, ExcelReader excelReader)
+    private static Thread GetThread(DeviceItem device, ExcelReader excelReader)
     {
-        return new Thread(() => StartSendingWithPhone(device, sender, excelReader));
+        return new Thread(() => StartSendingWithPhone(device, excelReader));
     }
     private static void Main()
     {
@@ -15,11 +15,10 @@ internal static class Program
         Console.OutputEncoding = Encoding.UTF8;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         ExcelReader excelReader = new("base.xlsx");
-        WhatsappSender deviceManager = new();
-        
+        new WhatsappSender(null).InitDevices();
         foreach (var client in WhatsappSender.Devices)
         {
-            var thread = GetThread(client, deviceManager, excelReader);
+            var thread = GetThread(client, excelReader);
             WhatsappSender.Workers.Add(new Worker(client, thread));
             thread.Start();
         }
@@ -34,7 +33,7 @@ internal static class Program
                     if (!worker.Thread.IsAlive)
                     {
                         WhatsappSender.Workers.Remove(worker);
-                        var thread = GetThread(worker.DeviceItem, deviceManager, excelReader);
+                        var thread = GetThread(worker.DeviceItem, excelReader);
                         WhatsappSender.Workers.Add(new Worker(worker.DeviceItem, thread));
                         thread.Start();
                     }
@@ -58,8 +57,9 @@ internal static class Program
         return message;
     }
 
-    private static void StartSendingWithPhone(DeviceItem device, WhatsappSender sender, ExcelReader reader)
+    private static void StartSendingWithPhone(DeviceItem device, ExcelReader reader)
     {
+        WhatsappSender sender = new(device);
         TimeDelay delay = ConfigManager.ReadConfigFile();
         var client = sender.GetClient(device);
         if (client is null)

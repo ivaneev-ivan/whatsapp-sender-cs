@@ -25,9 +25,13 @@ public class WhatsappSender
     public static List<DeviceItem> Devices = [];
     
 
-    public WhatsappSender()
+    public WhatsappSender(DeviceItem? device)
     {
-        StartAdb();
+        StartAdb(device);
+    }
+
+    public void InitDevices()
+    {
         Devices = ConfigManager.GetDevicesFromConfig();
         if (Devices.Count == 0)
         {
@@ -59,7 +63,25 @@ public class WhatsappSender
     /// <summary>
     ///     Метод по запуску adb
     /// </summary>
-    private static void StartAdb()
+    ///
+    
+    private static void CopyFilesRecursively(string sourcePath, string targetPath)
+    {
+        //Now Create all of the directories
+        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
+        }
+
+        //Copy all the files & Replaces any files with the same name
+        foreach (string newPath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
+        {
+            File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
+        }
+    }
+
+    
+    private static void StartAdb(DeviceItem? device = null)
     {
         var server = new AdbServer();
         // перезагрузка сервера adb
@@ -71,15 +93,21 @@ public class WhatsappSender
         {
             //
         }
-
+        
         var fileName = "/usr/bin/adb";
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "platform-tools/adb.exe";
-        //var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "reconnect device" };
-        //var proc = new Process { StartInfo = startInfo };
-        //proc.Start();
-        //startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "kill-server" };
-        //proc = new Process { StartInfo = startInfo };
-        //proc.Start();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) )
+        {
+            string copyFolderPath = "platform-tools";
+            if (device != null)
+            {
+                copyFolderPath = $"platform-tools-{device}";
+                if (!Directory.Exists(copyFolderPath))
+                {
+                    CopyFilesRecursively("platform-tools", copyFolderPath);
+                }
+            }
+            fileName = copyFolderPath + "/adb.exe";
+        }
         var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
         var proc = new Process { StartInfo = startInfo };
         proc.Start();
@@ -188,27 +216,27 @@ public class WhatsappSender
         Thread.Sleep(1000);
     }
 
-    /// <summary>
-    ///     Получение мобильного телефона
-    /// </summary>
-    /// <returns>Мобильный телефон</returns>
-    public DeviceData? GetDevice(int depth = 0)
-    {
-        try
-        {
-            var device = _client.GetDevices().FirstOrDefault();
-            return device;
-        }
-        catch (Exception)
-        {
-            if (depth == 2)
-            {
-                throw new Exception("Не удалось найти устройство");
-            }
-            StartAdb();
-            return GetDevice(depth + 1);
-        }
-    }
+    // /// <summary>
+    // ///     Получение мобильного телефона
+    // /// </summary>
+    // /// <returns>Мобильный телефон</returns>
+    // public DeviceData? GetDevice(int depth = 0)
+    // {
+    //     try
+    //     {
+    //         var device = _client.GetDevices().FirstOrDefault();
+    //         return device;
+    //     }
+    //     catch (Exception)
+    //     {
+    //         if (depth == 2)
+    //         {
+    //             throw new Exception("Не удалось найти устройство");
+    //         }
+    //         StartAdb();
+    //         return GetDevice(depth + 1);
+    //     }
+    // }
 
     public List<DeviceItem> GetAllDevicesToConfig()
     {
