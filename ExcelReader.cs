@@ -49,7 +49,7 @@ public class ExcelReader
         var phone = sheet.Cells[$"A{row}"].Text;
         var name = sheet.Cells[$"B{row}"].Text;
         var status = sheet.Cells[$"C{row}"].Text;
-        if (string.IsNullOrEmpty(status)) return new UserData(name, phone);
+        if (string.IsNullOrEmpty(status) || status == "inprogress") return new UserData(name, phone);
         return null;
     }
 
