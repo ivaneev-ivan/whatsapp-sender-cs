@@ -75,16 +75,26 @@ public class WhatsappSender
             File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
     }
 
-
-    private static void StartAdb()
+    private static string GetAdbPath()
     {
         var fileName = "/usr/bin/adb";
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "platform-tools/adb.exe";
+        return fileName;
+    }
+
+    public static void KillAdb()
+    {
+        var fileName = GetAdbPath();
         var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "kill-server" };
         var proc = new Process { StartInfo = startInfo };
         proc.Start();
-        startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
-        proc = new Process { StartInfo = startInfo };
+    }
+    
+    private static void StartAdb()
+    {
+        var fileName = GetAdbPath();
+        var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
+        var proc = new Process { StartInfo = startInfo };
         proc.Start();
         var server = new AdbServer();
         // перезагрузка сервера adb

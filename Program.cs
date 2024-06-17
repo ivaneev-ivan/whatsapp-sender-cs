@@ -13,6 +13,7 @@ internal static class Program
 
     private static void Main()
     {
+        AppDomain.CurrentDomain.ProcessExit += new EventHandler (OnProcessExit); 
         while (true)
         {
             try
@@ -114,4 +115,10 @@ internal static class Program
             Console.WriteLine("Для закрытия консоли нажмите любую клавишу . . .");
         }
     }
+    
+    static void OnProcessExit (object sender, EventArgs e)
+    {
+        WhatsappSender.KillAdb();
+    }
+
 }
