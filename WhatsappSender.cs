@@ -1,5 +1,6 @@
 #nullable enable
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.DeviceCommands;
@@ -48,12 +49,20 @@ public class WhatsappSender
 
     public DeviceData? GetClient(DeviceItem data)
     {
-        var devices = _client.GetDevices();
-        foreach (var device in devices)
-            if (device.Serial == data.Name)
-                return device;
+        try
+        {
+            var devices = _client.GetDevices();
+            foreach (var device in devices)
+                if (device.Serial == data.Name)
+                    return device;
 
-        return null;
+            return null;
+        }
+        catch (SocketException)
+        {
+            StartAdb();
+            return GetClient(data);
+        }
     }
 
     /// <summary>
