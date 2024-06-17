@@ -6,6 +6,8 @@ namespace whatsapp_sender;
 
 internal static class Program
 {
+    private static bool keepRunning = true;
+
     private static Thread GetThread(DeviceItem device, ExcelReader excelReader, UserData phone, WhatsappSender sender)
     {
         return new Thread(() => StartSendingWithPhone(device, excelReader, phone, sender));
@@ -13,8 +15,12 @@ internal static class Program
 
     private static void Main()
     {
-        AppDomain.CurrentDomain.ProcessExit += new EventHandler (OnProcessExit); 
-        while (true)
+        Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e) {
+            e.Cancel = true;
+            keepRunning = false;
+        };
+
+        while (keepRunning)
         {
             try
             {
@@ -70,6 +76,7 @@ internal static class Program
                 // do nothing...
             }
         }
+        WhatsappSender.KillAdb();
     }
 
     private static string GetMessage(UserData data)
@@ -115,10 +122,4 @@ internal static class Program
             Console.WriteLine("Для закрытия консоли нажмите любую клавишу . . .");
         }
     }
-    
-    static void OnProcessExit (object sender, EventArgs e)
-    {
-        WhatsappSender.KillAdb();
-    }
-
 }

@@ -88,6 +88,7 @@ public class WhatsappSender
         var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "kill-server" };
         var proc = new Process { StartInfo = startInfo };
         proc.Start();
+        Console.WriteLine("ADB KILL");
     }
     
     private static void StartAdb()
