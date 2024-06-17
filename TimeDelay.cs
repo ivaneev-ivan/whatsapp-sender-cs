@@ -1,4 +1,5 @@
 ﻿namespace whatsapp_sender;
+
 public struct TimeDelay(int start, int stop)
 {
     private readonly Random _random = new();
@@ -6,7 +7,7 @@ public struct TimeDelay(int start, int stop)
     public int Stop = stop;
 
     /// <summary>
-    /// Получение задержки в секундах
+    ///     Получение задержки в секундах
     /// </summary>
     /// <returns>задержка</returns>
     public readonly int GetDelay()

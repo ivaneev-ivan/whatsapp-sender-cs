@@ -1,13 +1,11 @@
 #nullable enable
-using AdvancedSharpAdbClient;
-using AdvancedSharpAdbClient.DeviceCommands;
-using AdvancedSharpAdbClient.DeviceCommands.Models;
-using AdvancedSharpAdbClient.Models;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using AdvancedSharpAdbClient;
+using AdvancedSharpAdbClient.DeviceCommands;
+using AdvancedSharpAdbClient.Models;
 
 namespace whatsapp_sender;
-
 
 public struct Worker(DeviceItem device, Thread thread)
 {
@@ -20,10 +18,10 @@ public struct Worker(DeviceItem device, Thread thread)
 /// </summary>
 public class WhatsappSender
 {
-    private readonly AdbClient _client = new();
     public static List<Worker> Workers = [];
     public static List<DeviceItem> Devices = [];
-    
+    private readonly AdbClient _client = new();
+
 
     public WhatsappSender()
     {
@@ -41,8 +39,10 @@ public class WhatsappSender
                 Console.WriteLine("Устройства не найдены");
                 return;
             }
+
             ConfigManager.WriteDevicesToConfig(Devices);
         }
+
         Console.WriteLine("Получил и записал список всех устройств");
     }
 
@@ -50,31 +50,23 @@ public class WhatsappSender
     {
         var devices = _client.GetDevices();
         foreach (var device in devices)
-        {
             if (device.Serial == data.Name)
-            {
                 return device;
-            } 
-        }
 
         return null;
     }
-    
+
     /// <summary>
     ///     Метод по запуску adb
     /// </summary>
-    ///
-    
     public static void CopyFilesRecursively(string sourcePath, string targetPath)
     {
         Directory.CreateDirectory(targetPath);
-        foreach (string newPath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
-        {
+        foreach (var newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
-        }
     }
 
-    
+
     private static void StartAdb()
     {
         var server = new AdbServer();
@@ -87,11 +79,9 @@ public class WhatsappSender
         {
             //
         }
-        string fileName = "/usr/bin/adb";
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) )
-        {
-            fileName = "platform-tools/adb.exe";
-        }
+
+        var fileName = "/usr/bin/adb";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "platform-tools/adb.exe";
         var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
         var proc = new Process { StartInfo = startInfo };
         proc.Start();
@@ -116,6 +106,7 @@ public class WhatsappSender
                 break;
             }
         }
+
         _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", device);
         _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", device);
     }
@@ -146,17 +137,16 @@ public class WhatsappSender
             foreach (var textPartitionWithCommand in commandsParts)
             {
                 var words = textPartitionWithCommand.Message.Split(" ");
-                int i = 0;
+                var i = 0;
                 foreach (var w in words)
                 {
-                    string a = "";
-                    if (i + 1 != words.Count())
-                    {
-                        a = " ";
-                    }
+                    var a = "";
+                    if (i + 1 != words.Count()) a = " ";
                     SendText(device, w + a);
                     i++;
-                };
+                }
+
+                ;
                 switch (textPartitionWithCommand.CommandType)
                 {
                     case CommandType.NewMessage:
@@ -171,6 +161,7 @@ public class WhatsappSender
                         throw new ArgumentOutOfRangeException();
                 }
             }
+
             Thread.Sleep(part.Delay.GetDelay());
         }
     }
@@ -226,10 +217,7 @@ public class WhatsappSender
     {
         List<DeviceItem> result = new();
         var devices = _client.GetDevices();
-        foreach (var device in devices)
-        {
-            result.Add(new DeviceItem(device.Model, device.Serial));
-        }
+        foreach (var device in devices) result.Add(new DeviceItem(device.Model, device.Serial));
         return result;
     }
 
@@ -266,7 +254,6 @@ public class WhatsappSender
     public string SendToPhone(DeviceData device, UserData data, string message, ExcelReader reader)
     {
         while (true)
-        {
             try
             {
                 reader.WriteStatusPhone(data, "inprogress");
@@ -275,12 +262,12 @@ public class WhatsappSender
             catch (Exception e)
             {
                 Thread.Sleep(1000);
-            }    
-        }
+            }
+
         var isSent = false;
         InstallAdbKeyboard(device);
         StopWhatsapp(device);
-        OpenChat(device,data.Phone);
+        OpenChat(device, data.Phone);
         _client.ExecuteRemoteCommand("ime enable com.android.adbkeyboard/.AdbIME", device);
         _client.ExecuteRemoteCommand("ime set com.android.adbkeyboard/.AdbIME", device);
         try
@@ -296,7 +283,6 @@ public class WhatsappSender
         }
 
         while (true)
-        {
             try
             {
                 var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent");
@@ -306,7 +292,6 @@ public class WhatsappSender
             catch (Exception e)
             {
                 Thread.Sleep(1000);
-            }    
-        }
+            }
     }
 }

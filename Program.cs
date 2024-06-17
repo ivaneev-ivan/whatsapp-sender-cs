@@ -16,7 +16,7 @@ internal static class Program
         Console.OutputEncoding = Encoding.UTF8;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         ExcelReader excelReader = new("base.xlsx");
-        WhatsappSender whatsappSender = new WhatsappSender();
+        var whatsappSender = new WhatsappSender();
         whatsappSender.InitDevices();
         UserData phone;
         foreach (var client in WhatsappSender.Devices)
@@ -29,9 +29,7 @@ internal static class Program
         }
 
         while (ExcelReader.Phones.Count != 0 && WhatsappSender.Workers.Count != 0)
-        {
-            for (int i = 0; i < WhatsappSender.Workers.Count; i++)
-            {
+            for (var i = 0; i < WhatsappSender.Workers.Count; i++)
                 try
                 {
                     var worker = WhatsappSender.Workers[i];
@@ -49,8 +47,6 @@ internal static class Program
                 {
                     //
                 }
-            }
-        }
 
         Console.WriteLine("Рассылка завершена");
         Console.Write("Для закрытия консоли нажмите любую клавишу . . .");
@@ -83,8 +79,8 @@ internal static class Program
         var message = GetMessage(phone);
         var status = sender.SendToPhone(client, phone, message, reader);
         Console.Write($"\r{device.ToString()} {phone.Phone}: {status}\r\n");
-        TimeDelay delay = ConfigManager.ReadConfigFile();
-        int sleep = delay.GetDelay();
+        var delay = ConfigManager.ReadConfigFile();
+        var sleep = delay.GetDelay();
         Console.Write("Программы и консультации по рассылкам в WhatsApp admin1.ru / +79219114848\n");
         for (var i = sleep / 1000; i > 0; i--)
         {

@@ -9,8 +9,6 @@ public enum CommandType
     None = 2
 }
 
-
-
 public struct TextPartition(int start, int stop, string message)
 {
     public TimeDelay Delay = new(start, stop);

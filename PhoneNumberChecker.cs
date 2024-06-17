@@ -1,7 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 
 namespace whatsapp_sender;
-static class PhoneNumberChecker
+
+internal static class PhoneNumberChecker
 {
     public static bool Check(string phone)
     {

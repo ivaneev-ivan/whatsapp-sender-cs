@@ -3,7 +3,7 @@ using OfficeOpenXml;
 namespace whatsapp_sender;
 
 /// <summary>
-/// Стурктура объекта в excel
+///     Стурктура объекта в excel
 /// </summary>
 /// <param name="name">Имя пользователя</param>
 /// <param name="phone">Номер телефона</param>
@@ -18,37 +18,25 @@ public struct UserData(string name, string phone)
     }
 }
 
-public struct StatusUserData(UserData data, string status)
-{
-    public UserData Data = data;
-    public string Status = status;
-
-    public override string ToString()
-    {
-        return $"{data.ToString()} {Status}";
-    }
-}
-
 /// <summary>
-/// Класс для работы с Excel файлом
+///     Класс для работы с Excel файлом
 /// </summary>
 /// <param name="fileName">Имя файла</param>
 public class ExcelReader
 {
     public static List<UserData> Phones = new();
-    public static List<StatusUserData> DonePhones = new();
-    private string _fileName;
+    private readonly string _fileName;
 
     public ExcelReader(string fileName)
     {
         _fileName = fileName;
         try
         {
-            ExcelReader.Phones = GetPhoneNumber(true);
+            Phones = GetPhoneNumber(true);
         }
         catch (IOException e)
         {
-            Console.WriteLine("?? ??????? ??????? ????");
+            Console.WriteLine("Excel файл использует другой процесс");
             throw;
         }
     }
@@ -58,18 +46,14 @@ public class ExcelReader
         var phone = sheet.Cells[$"A{row}"].Text;
         var name = sheet.Cells[$"B{row}"].Text;
         var status = sheet.Cells[$"C{row}"].Text;
-        if (string.IsNullOrEmpty(status))
-        {
-            return new UserData(name, phone);
-        }
+        if (string.IsNullOrEmpty(status)) return new UserData(name, phone);
         return null;
     }
-    
+
     /// <summary>
-    /// Плучение первого не отправленного номера телефона или же пустой объект, если таких нет
+    ///     Плучение первого не отправленного номера телефона или же пустой объект, если таких нет
     /// </summary>
     /// <returns>Объект записи в excel</returns>
-    /// 
     public UserData GetPhoneNumber()
     {
         using var package = new ExcelPackage(new FileInfo(_fileName));
@@ -78,15 +62,14 @@ public class ExcelReader
         var sheet = package.Workbook.Worksheets[0];
         var start = sheet.Dimension.Start.Row;
         var end = sheet.Dimension.End.Row;
-        for (int row = start; row <= end; row++)
+        for (var row = start; row <= end; row++)
         {
             var user = CheckUser(sheet, row);
-            if (user is null)
-            {
-                continue;
-            }
+            if (user is null) continue;
+
             return (UserData)user;
         }
+
         throw new PhoneNotFound();
     }
 
@@ -99,15 +82,14 @@ public class ExcelReader
         var start = sheet.Dimension.Start.Row;
         var end = sheet.Dimension.End.Row;
         List<UserData> data = new();
-        for (int row = start; row <= end; row++)
+        for (var row = start; row <= end; row++)
         {
             var user = CheckUser(sheet, row);
-            if (user is null)
-            {
-                continue;
-            }
+            if (user is null) continue;
+
             data.Add((UserData)user);
         }
+
         return data;
     }
 
@@ -117,7 +99,7 @@ public class ExcelReader
     }
 
     /// <summary>
-    /// Запись статуса для пользователя в excel: sent/not sent
+    ///     Запись статуса для пользователя в excel: sent/not sent
     /// </summary>
     /// <param name="data">Пользователь из excel</param>
     /// <param name="status">Отправление или нет</param>
@@ -130,18 +112,18 @@ public class ExcelReader
         var sheet = package.Workbook.Worksheets[0];
         var start = sheet.Dimension.Start.Row;
         var end = sheet.Dimension.End.Row;
-        for (int row = start; row <= end; row++)
+        for (var row = start; row <= end; row++)
         {
             var phone = sheet.Cells[$"A{row}"].Text;
-            if (phone == data.Phone)
-            {
-                sheet.Cells[$"C{row}"].Value = status;
-            }
+            if (phone == data.Phone) sheet.Cells[$"C{row}"].Value = status;
         }
+
         sheet.Cells.AutoFitColumns();
         package.SaveAs(new FileInfo(_fileName));
         return status;
     }
 }
 
-class PhoneNotFound : Exception { }
+internal class PhoneNotFound : Exception
+{
+}

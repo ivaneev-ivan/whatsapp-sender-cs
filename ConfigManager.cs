@@ -10,12 +10,9 @@ internal static class ConfigManager
         try
         {
             using var file = new FileStream("data.json", FileMode.OpenOrCreate);
-            Dictionary<string, int>? item = JsonSerializer.Deserialize<Dictionary<string, int>>(file);
-            if (item == null)
-            {
-                throw new ConfigNotFound("Файл data.json не найден");
-            }
-            return new TimeDelay(start: item["StartDelay"], stop: item["StopDelay"]);
+            var item = JsonSerializer.Deserialize<Dictionary<string, int>>(file);
+            if (item == null) throw new ConfigNotFound("Файл data.json не найден");
+            return new TimeDelay(item["StartDelay"], item["StopDelay"]);
         }
         catch (Exception)
         {
@@ -27,45 +24,33 @@ internal static class ConfigManager
     }
 
     /// <summary>
-    /// Записывает списко девайсов в конфиг файл
+    ///     Записывает списко девайсов в конфиг файл
     /// </summary>
     /// <param name="devices">Коллекция девайсов</param>
     public static void WriteDevicesToConfig(List<DeviceItem> devices)
     {
         var data = "";
-        foreach (var device in devices)
-        {
-            data += device + "\n";
-        }
+        foreach (var device in devices) data += device + "\n";
 
-        if (data.Length > 1 && data[^1] == '\n')
-        {
-            data = data.Substring(0, data.Length - 1);
-        }
+        if (data.Length > 1 && data[^1] == '\n') data = data.Substring(0, data.Length - 1);
 
         File.WriteAllText("devices.txt", data);
     }
 
     /// <summary>
-    /// Полученение всех устройств из конфига
+    ///     Полученение всех устройств из конфига
     /// </summary>
     /// <returns>Список девайсов</returns>
     public static List<DeviceItem> GetDevicesFromConfig()
     {
         try
         {
-            string data = File.ReadAllText("devices.txt");
+            var data = File.ReadAllText("devices.txt");
             Console.WriteLine(data);
             List<DeviceItem> devices = new();
-            if (string.IsNullOrEmpty(data))
-            {
-                return new List<DeviceItem>();
-            }
+            if (string.IsNullOrEmpty(data)) return new List<DeviceItem>();
 
-            foreach (var element in data.Split("\n"))
-            {
-                devices.Add(DeviceItem.FromString(element));
-            }
+            foreach (var element in data.Split("\n")) devices.Add(DeviceItem.FromString(element));
 
             return devices;
         }
@@ -76,4 +61,4 @@ internal static class ConfigManager
     }
 }
 
-class ConfigNotFound(string? message) : Exception(message);
+internal class ConfigNotFound(string? message) : Exception(message);
