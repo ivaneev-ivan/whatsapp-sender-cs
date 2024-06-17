@@ -307,7 +307,7 @@ public class WhatsappSender
         while (true)
             try
             {
-                var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent", phone);
+                var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent", phone, message);
                 Close(device);
                 return status;
             }

@@ -126,7 +126,7 @@ public class ExcelReader
         return status;
     }
 
-    public string WriteStatusPhone(UserData data, string status, DeviceItem device)
+    public string WriteStatusPhone(UserData data, string status, DeviceItem device, string message)
     {
         using var package = new ExcelPackage(new FileInfo(_fileName));
         using var file = File.Open(_fileName, FileMode.Open);
@@ -142,7 +142,8 @@ public class ExcelReader
             {
                 sheet.Cells[$"C{row}"].Value = status;
                 sheet.Cells[$"D{row}"].Value = device.Model;
-                sheet.Cells[$"F{row}"].Value = device.Name;
+                sheet.Cells[$"E{row}"].Value = device.Name;
+                sheet.Cells[$"F{row}"].Value = message;
             }
         }
         sheet.Cells.AutoFitColumns();
