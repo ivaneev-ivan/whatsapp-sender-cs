@@ -1,0 +1,2 @@
+﻿cd platform-tools
+adb.exe kill-server

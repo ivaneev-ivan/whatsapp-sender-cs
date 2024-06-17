@@ -70,7 +70,7 @@ internal static class Program
             var find = WhatsappSender.Workers.Find(worker => worker.DeviceItem.Name == device.Name);
             WhatsappSender.Workers.Remove(find);
             WhatsappSender.Devices.Remove(device);
-            ExcelReader.Phones.Add(phone);
+            ExcelReader.Phones.Insert(0, phone);
             Console.WriteLine($"Устройство не найдено {device.ToString()}");
             ConfigManager.WriteDevicesToConfig(WhatsappSender.Devices);
             return;
