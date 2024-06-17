@@ -141,7 +141,8 @@ public class ExcelReader
             if (phone == data.Phone)
             {
                 sheet.Cells[$"C{row}"].Value = status;
-                sheet.Cells[$"D{row}"].Value = device.ToString();
+                sheet.Cells[$"D{row}"].Value = device.Model;
+                sheet.Cells[$"F{row}"].Value = device.Name;
             }
         }
         sheet.Cells.AutoFitColumns();
