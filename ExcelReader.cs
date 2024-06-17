@@ -125,6 +125,29 @@ public class ExcelReader
         package.SaveAs(new FileInfo(_fileName));
         return status;
     }
+
+    public string WriteStatusPhone(UserData data, string status, DeviceItem device)
+    {
+        using var package = new ExcelPackage(new FileInfo(_fileName));
+        using var file = File.Open(_fileName, FileMode.Open);
+        package.Load(file);
+        file.Close();
+        var sheet = package.Workbook.Worksheets[0];
+        var start = sheet.Dimension.Start.Row;
+        var end = sheet.Dimension.End.Row;
+        for (var row = start; row <= end; row++)
+        {
+            var phone = sheet.Cells[$"A{row}"].Text;
+            if (phone == data.Phone)
+            {
+                sheet.Cells[$"C{row}"].Value = status;
+                sheet.Cells[$"D{row}"].Value = device.ToString();
+            }
+        }
+        sheet.Cells.AutoFitColumns();
+        package.SaveAs(new FileInfo(_fileName));
+        return status;
+    }
 }
 
 internal class PhoneNotFound : Exception

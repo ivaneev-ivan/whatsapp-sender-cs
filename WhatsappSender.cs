@@ -251,7 +251,7 @@ public class WhatsappSender
         _client.ExecuteRemoteCommand("ime reset", device);
     }
 
-    public string SendToPhone(DeviceData device, UserData data, string message, ExcelReader reader)
+    public string SendToPhone(DeviceData device, UserData data, string message, ExcelReader reader, DeviceItem phone)
     {
         while (true)
             try
@@ -285,7 +285,7 @@ public class WhatsappSender
         while (true)
             try
             {
-                var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent");
+                var status = reader.WriteStatusPhone(data, isSent ? "sent" : "notsent", phone);
                 Close(device);
                 return status;
             }

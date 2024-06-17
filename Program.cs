@@ -29,6 +29,7 @@ internal static class Program
         }
 
         while (ExcelReader.Phones.Count != 0 && WhatsappSender.Workers.Count != 0)
+        {
             for (var i = 0; i < WhatsappSender.Workers.Count; i++)
                 try
                 {
@@ -47,9 +48,12 @@ internal static class Program
                 {
                     //
                 }
-
-        Console.WriteLine("Рассылка завершена");
-        Console.Write("Для закрытия консоли нажмите любую клавишу . . .");
+        }
+        if (WhatsappSender.Workers.Count == 0)
+        {
+            Console.WriteLine("Рассылка завершена");
+            Console.WriteLine("Для закрытия консоли нажмите любую клавишу . . .");
+        }
         Console.ReadLine();
     }
 
@@ -75,10 +79,11 @@ internal static class Program
             ConfigManager.WriteDevicesToConfig(WhatsappSender.Devices);
             return;
         }
-
         var message = GetMessage(phone);
-        var status = sender.SendToPhone(client, phone, message, reader);
-        Console.Write($"\r{device.ToString()} {phone.Phone}: {status}\r\n");
+        Console.WriteLine(message);
+        Console.Write($"\r{phone.Phone}: inprogress {device.ToString()} \r\n");
+        var status = sender.SendToPhone(client, phone, message, reader, device);
+        Console.Write($"\r{phone.Phone}: {status} {device.ToString()} \r\n");
         var delay = ConfigManager.ReadConfigFile();
         var sleep = delay.GetDelay();
         Console.Write("Программы и консультации по рассылкам в WhatsApp admin1.ru / +79219114848\n");
@@ -86,6 +91,12 @@ internal static class Program
         {
             Console.Write($"Пауза {i} секунд       \r");
             Thread.Sleep(1000);
+        }
+
+        if (ExcelReader.Phones.Count == 0)
+        {
+            Console.WriteLine("Рассылка завершена");
+            Console.WriteLine("Для закрытия консоли нажмите любую клавишу . . .");
         }
     }
 }
