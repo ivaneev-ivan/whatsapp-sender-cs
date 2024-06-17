@@ -21,12 +21,15 @@ public struct UserData(string name, string phone)
 /// <summary>
 ///     Класс для работы с Excel файлом
 /// </summary>
-/// <param name="fileName">Имя файла</param>
 public class ExcelReader
 {
     public static List<UserData> Phones = new();
     private readonly string _fileName;
 
+    /// <summary>
+    ///     Класс для работы с Excel файлом
+    /// </summary>
+    /// <param name="fileName">Имя файла для чтения</param>
     public ExcelReader(string fileName)
     {
         _fileName = fileName;
