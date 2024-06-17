@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net.Sockets;
+using System.Text;
 using OfficeOpenXml;
 
 namespace whatsapp_sender;
@@ -12,49 +13,62 @@ internal static class Program
 
     private static void Main()
     {
-        Console.InputEncoding = Encoding.UTF8;
-        Console.OutputEncoding = Encoding.UTF8;
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        ExcelReader excelReader = new("base.xlsx");
-        var whatsappSender = new WhatsappSender();
-        whatsappSender.InitDevices();
-        UserData phone;
-        foreach (var client in WhatsappSender.Devices)
+        while (true)
         {
-            phone = ExcelReader.Phones.First();
-            ExcelReader.Phones.Remove(phone);
-            var thread = GetThread(client, excelReader, phone, whatsappSender);
-            WhatsappSender.Workers.Add(new Worker(client, thread));
-            thread.Start();
-        }
+            try
+            {
+                Console.InputEncoding = Encoding.UTF8;
+                Console.OutputEncoding = Encoding.UTF8;
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                ExcelReader excelReader = new("base.xlsx");
+                var whatsappSender = new WhatsappSender();
+                whatsappSender.InitDevices();
+                UserData phone;
+                foreach (var client in WhatsappSender.Devices)
+                {
+                    phone = ExcelReader.Phones.First();
+                    ExcelReader.Phones.Remove(phone);
+                    var thread = GetThread(client, excelReader, phone, whatsappSender);
+                    WhatsappSender.Workers.Add(new Worker(client, thread));
+                    thread.Start();
+                }
 
-        while (ExcelReader.Phones.Count != 0 && WhatsappSender.Workers.Count != 0)
-        {
-            for (var i = 0; i < WhatsappSender.Workers.Count; i++)
-                try
+                while (ExcelReader.Phones.Count != 0 && WhatsappSender.Workers.Count != 0)
                 {
-                    var worker = WhatsappSender.Workers[i];
-                    if (!worker.Thread.IsAlive)
-                    {
-                        WhatsappSender.Workers.Remove(worker);
-                        phone = ExcelReader.Phones.First();
-                        ExcelReader.Phones.Remove(phone);
-                        var thread = GetThread(worker.DeviceItem, excelReader, phone, whatsappSender);
-                        WhatsappSender.Workers.Add(new Worker(worker.DeviceItem, thread));
-                        thread.Start();
-                    }
+                    for (var i = 0; i < WhatsappSender.Workers.Count; i++)
+                        try
+                        {
+                            var worker = WhatsappSender.Workers[i];
+                            if (!worker.Thread.IsAlive)
+                            {
+                                WhatsappSender.Workers.Remove(worker);
+                                phone = ExcelReader.Phones.First();
+                                ExcelReader.Phones.Remove(phone);
+                                var thread = GetThread(worker.DeviceItem, excelReader, phone, whatsappSender);
+                                WhatsappSender.Workers.Add(new Worker(worker.DeviceItem, thread));
+                                thread.Start();
+                            }
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            //
+                        }
                 }
-                catch (ArgumentOutOfRangeException)
+
+                if (WhatsappSender.Workers.Count == 0)
                 {
-                    //
+                    Console.WriteLine("Рассылка завершена");
+                    Console.WriteLine("Для закрытия консоли нажмите любую клавишу . . .");
                 }
+
+                Console.ReadLine();
+                break;
+            }
+            catch (SocketException)
+            {
+                // do nothing...
+            }
         }
-        if (WhatsappSender.Workers.Count == 0)
-        {
-            Console.WriteLine("Рассылка завершена");
-            Console.WriteLine("Для закрытия консоли нажмите любую клавишу . . .");
-        }
-        Console.ReadLine();
     }
 
     private static string GetMessage(UserData data)
@@ -79,6 +93,7 @@ internal static class Program
             ConfigManager.WriteDevicesToConfig(WhatsappSender.Devices);
             return;
         }
+
         var message = GetMessage(phone);
         Console.WriteLine(message);
         Console.Write($"\r{phone.Phone}: inprogress {device.ToString()} \r\n");
