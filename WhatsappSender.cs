@@ -31,9 +31,9 @@ public class WhatsappSender
 
     public void InitDevices()
     {
-        Devices = ConfigManager.GetDevicesFromConfig();
-        if (Devices.Count == 0)
-        {
+        // Devices = ConfigManager.GetDevicesFromConfig();
+        // if (Devices.Count == 0)
+        // {
             Devices = GetAllDevicesToConfig();
             if (Devices.Count == 0)
             {
@@ -42,7 +42,7 @@ public class WhatsappSender
             }
 
             ConfigManager.WriteDevicesToConfig(Devices);
-        }
+        // }
 
         Console.WriteLine("Получил и записал список всех устройств");
     }
