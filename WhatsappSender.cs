@@ -69,6 +69,14 @@ public class WhatsappSender
 
     private static void StartAdb()
     {
+        var fileName = "/usr/bin/adb";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "platform-tools/adb.exe";
+        var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "kill-server" };
+        var proc = new Process { StartInfo = startInfo };
+        proc.Start();
+        startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
+        proc = new Process { StartInfo = startInfo };
+        proc.Start();
         var server = new AdbServer();
         // перезагрузка сервера adb
         try
@@ -79,15 +87,6 @@ public class WhatsappSender
         {
             //
         }
-
-        var fileName = "/usr/bin/adb";
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) fileName = "platform-tools/adb.exe";
-        var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "kill-server" };
-        var proc = new Process { StartInfo = startInfo };
-        proc.Start();
-        startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
-        proc = new Process { StartInfo = startInfo };
-        proc.Start();
         Thread.Sleep(1000);
     }
 
