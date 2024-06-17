@@ -5,16 +5,25 @@ namespace whatsapp_sender;
 
 internal static class ConfigManager
 {
-
     public static TimeDelay ReadConfigFile()
     {
-        using var file = new FileStream("data.json", FileMode.OpenOrCreate);
-        Dictionary<string, int>? item = JsonSerializer.Deserialize<Dictionary<string, int>>(file);
-        if (item == null)
+        try
         {
-            throw new ConfigNotFound("Файл data.json не найден");
+            using var file = new FileStream("data.json", FileMode.OpenOrCreate);
+            Dictionary<string, int>? item = JsonSerializer.Deserialize<Dictionary<string, int>>(file);
+            if (item == null)
+            {
+                throw new ConfigNotFound("Файл data.json не найден");
+            }
+            return new TimeDelay(start: item["StartDelay"], stop: item["StopDelay"]);
         }
-        return new TimeDelay(start: item["StartDelay"], stop: item["StopDelay"]);
+        catch (Exception)
+        {
+            Console.WriteLine("data.json открыт другим процессом");
+            Environment.Exit(0);
+        }
+
+        return new TimeDelay(0, 0);
     }
 
     /// <summary>
@@ -28,11 +37,13 @@ internal static class ConfigManager
         {
             data += device + "\n";
         }
-        if ( data.Length > 1 && data[^1] == '\n')
+
+        if (data.Length > 1 && data[^1] == '\n')
         {
             data = data.Substring(0, data.Length - 1);
         }
-        File.WriteAllText("devices.txt",data);
+
+        File.WriteAllText("devices.txt", data);
     }
 
     /// <summary>
@@ -50,6 +61,7 @@ internal static class ConfigManager
             {
                 return new List<DeviceItem>();
             }
+
             foreach (var element in data.Split("\n"))
             {
                 devices.Add(DeviceItem.FromString(element));
@@ -62,7 +74,6 @@ internal static class ConfigManager
             return new List<DeviceItem>();
         }
     }
-    
 }
 
 class ConfigNotFound(string? message) : Exception(message);

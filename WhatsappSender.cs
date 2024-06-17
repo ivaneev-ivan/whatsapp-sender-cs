@@ -25,9 +25,9 @@ public class WhatsappSender
     public static List<DeviceItem> Devices = [];
     
 
-    public WhatsappSender(DeviceItem? device)
+    public WhatsappSender()
     {
-        StartAdb(device);
+        StartAdb();
     }
 
     public void InitDevices()
@@ -65,15 +65,9 @@ public class WhatsappSender
     /// </summary>
     ///
     
-    private static void CopyFilesRecursively(string sourcePath, string targetPath)
+    public static void CopyFilesRecursively(string sourcePath, string targetPath)
     {
-        //Now Create all of the directories
-        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
-        {
-            Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
-        }
-
-        //Copy all the files & Replaces any files with the same name
+        Directory.CreateDirectory(targetPath);
         foreach (string newPath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
         {
             File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
@@ -81,7 +75,7 @@ public class WhatsappSender
     }
 
     
-    private static void StartAdb(DeviceItem? device = null)
+    private static void StartAdb()
     {
         var server = new AdbServer();
         // перезагрузка сервера adb
@@ -93,20 +87,10 @@ public class WhatsappSender
         {
             //
         }
-        
-        var fileName = "/usr/bin/adb";
+        string fileName = "/usr/bin/adb";
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) )
         {
-            string copyFolderPath = "platform-tools";
-            if (device != null)
-            {
-                copyFolderPath = $"platform-tools-{((DeviceItem)device).Name}";
-                if (!Directory.Exists(copyFolderPath))
-                {
-                    CopyFilesRecursively("platform-tools", copyFolderPath);
-                }
-            }
-            fileName = copyFolderPath + "/adb.exe";
+            fileName = "platform-tools/adb.exe";
         }
         var startInfo = new ProcessStartInfo { FileName = fileName, Arguments = "devices" };
         var proc = new Process { StartInfo = startInfo };
