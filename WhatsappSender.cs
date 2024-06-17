@@ -265,6 +265,18 @@ public class WhatsappSender
 
     public string SendToPhone(DeviceData device, UserData data, string message, ExcelReader reader)
     {
+        while (true)
+        {
+            try
+            {
+                reader.WriteStatusPhone(data, "inprogress");
+                break;
+            }
+            catch (Exception e)
+            {
+                Thread.Sleep(1000);
+            }    
+        }
         var isSent = false;
         InstallAdbKeyboard(device);
         StopWhatsapp(device);

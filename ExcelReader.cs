@@ -3,10 +3,10 @@ using OfficeOpenXml;
 namespace whatsapp_sender;
 
 /// <summary>
-/// Стурктура объекта в excel
+/// РЎС‚СѓСЂРєС‚СѓСЂР° РѕР±СЉРµРєС‚Р° РІ excel
 /// </summary>
-/// <param name="name">Имя пользователя</param>
-/// <param name="phone">Номер телефона</param>
+/// <param name="name">РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ</param>
+/// <param name="phone">РќРѕРјРµСЂ С‚РµР»РµС„РѕРЅР°</param>
 public struct UserData(string name, string phone)
 {
     public string Name = name;
@@ -30,9 +30,9 @@ public struct StatusUserData(UserData data, string status)
 }
 
 /// <summary>
-/// Класс для работы с Excel файлом
+/// РљР»Р°СЃСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Excel С„Р°Р№Р»РѕРј
 /// </summary>
-/// <param name="fileName">Имя файла</param>
+/// <param name="fileName">РРјСЏ С„Р°Р№Р»Р°</param>
 public class ExcelReader
 {
     public static List<UserData> Phones = new();
@@ -66,9 +66,9 @@ public class ExcelReader
     }
     
     /// <summary>
-    /// Плучение первого не отправленного номера телефона или же пустой объект, если таких нет
+    /// РџР»СѓС‡РµРЅРёРµ РїРµСЂРІРѕРіРѕ РЅРµ РѕС‚РїСЂР°РІР»РµРЅРЅРѕРіРѕ РЅРѕРјРµСЂР° С‚РµР»РµС„РѕРЅР° РёР»Рё Р¶Рµ РїСѓСЃС‚РѕР№ РѕР±СЉРµРєС‚, РµСЃР»Рё С‚Р°РєРёС… РЅРµС‚
     /// </summary>
-    /// <returns>Объект записи в excel</returns>
+    /// <returns>РћР±СЉРµРєС‚ Р·Р°РїРёСЃРё РІ excel</returns>
     /// 
     public UserData GetPhoneNumber()
     {
@@ -117,10 +117,10 @@ public class ExcelReader
     }
 
     /// <summary>
-    /// Запись статуса для пользователя в excel: sent/not sent
+    /// Р—Р°РїРёСЃСЊ СЃС‚Р°С‚СѓСЃР° РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РІ excel: sent/not sent
     /// </summary>
-    /// <param name="data">Пользователь из excel</param>
-    /// <param name="status">Отправление или нет</param>
+    /// <param name="data">РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёР· excel</param>
+    /// <param name="status">РћС‚РїСЂР°РІР»РµРЅРёРµ РёР»Рё РЅРµС‚</param>
     public string WriteStatusPhone(UserData data, string status)
     {
         using var package = new ExcelPackage(new FileInfo(_fileName));
