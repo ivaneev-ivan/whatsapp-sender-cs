@@ -268,7 +268,7 @@ public class WhatsappSender
     /// <summary>
     ///     Действия, по возращению в исходный вид, до запуска программы
     /// </summary>
-    private void Close(DeviceData device)
+    public void Close(DeviceData device)
     {
         _client.ExecuteRemoteCommand("ime reset", device);
     }

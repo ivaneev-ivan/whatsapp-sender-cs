@@ -19,7 +19,8 @@ internal static class Program
             e.Cancel = true;
             keepRunning = false;
         };
-
+        Console.WriteLine("Введите reset, если хотите, чтобы на всех телефонах вернулась клавиатура");
+        bool isReset = Console.ReadLine() == "reset";
         while (keepRunning)
         {
             try
@@ -33,13 +34,25 @@ internal static class Program
                 UserData phone;
                 foreach (var client in WhatsappSender.Devices)
                 {
-                    phone = ExcelReader.Phones.First();
-                    ExcelReader.Phones.Remove(phone);
-                    var thread = GetThread(client, excelReader, phone, whatsappSender);
-                    WhatsappSender.Workers.Add(new Worker(client, thread));
-                    thread.Start();
+                    if (isReset)
+                    {
+                        whatsappSender.Close(whatsappSender.GetClient(client)!);
+                    }
+                    else
+                    {
+                        phone = ExcelReader.Phones.First();
+                        ExcelReader.Phones.Remove(phone);
+                        var thread = GetThread(client, excelReader, phone, whatsappSender);
+                        WhatsappSender.Workers.Add(new Worker(client, thread));
+                        thread.Start();
+                    }
                 }
 
+                if (isReset)
+                {
+                    Console.WriteLine("Клавиатура возращена");
+                    return;
+                }
                 while (ExcelReader.Phones.Count != 0 && WhatsappSender.Workers.Count != 0)
                 {
                     for (var i = 0; i < WhatsappSender.Workers.Count; i++)
