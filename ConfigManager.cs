@@ -23,6 +23,24 @@ internal static class ConfigManager
         return new TimeDelay(0, 0);
     }
 
+    public static bool StartSending()
+    {
+        try
+        {
+            using var file = new FileStream("data.json", FileMode.OpenOrCreate);
+            var item = JsonSerializer.Deserialize<Dictionary<string, int>>(file);
+            if (item == null) throw new ConfigNotFound("Файл data.json не найден");
+            return item["StartSending"] == 1;
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("data.json открыт другим процессом");
+            Environment.Exit(0);
+        }
+
+        return true;
+    }
+    
     /// <summary>
     ///     Записывает списко девайсов в конфиг файл
     /// </summary>

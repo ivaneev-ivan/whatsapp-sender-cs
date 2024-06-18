@@ -15,18 +15,18 @@ internal static class Program
 
     private static void Main()
     {
+        Console.InputEncoding = Encoding.UTF8;
+        Console.OutputEncoding = Encoding.UTF8;
+        Console.WriteLine("0 - Сбросить клавиатуру и выйти\n1 - Начать рассылку");
+        var isReset = Console.ReadLine() == "1";
         Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e) {
             e.Cancel = true;
             keepRunning = false;
         };
-        Console.WriteLine("Введите reset, если хотите, чтобы на всех телефонах вернулась клавиатура");
-        bool isReset = Console.ReadLine() == "reset";
         while (keepRunning)
         {
             try
             {
-                Console.InputEncoding = Encoding.UTF8;
-                Console.OutputEncoding = Encoding.UTF8;
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                 ExcelReader excelReader = new("base.xlsx");
                 var whatsappSender = new WhatsappSender();
@@ -34,7 +34,7 @@ internal static class Program
                 UserData phone;
                 foreach (var client in WhatsappSender.Devices)
                 {
-                    if (isReset)
+                    if (!isReset)
                     {
                         whatsappSender.Close(whatsappSender.GetClient(client)!);
                     }
@@ -48,7 +48,7 @@ internal static class Program
                     }
                 }
 
-                if (isReset)
+                if (!isReset)
                 {
                     Console.WriteLine("Клавиатура возращена");
                     return;

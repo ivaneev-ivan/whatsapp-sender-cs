@@ -1,4 +1,5 @@
 {
   "StartDelay": 1,
-  "StopDelay": 10
+  "StopDelay": 10,
+  "StartSending": 1
 }
