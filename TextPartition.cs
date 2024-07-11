@@ -6,7 +6,7 @@ public enum CommandType
 {
     Enter = 0,
     NewMessage = 1,
-    None = 2
+    None = 2,
 }
 
 public struct TextPartition(int start, int stop, string message)
@@ -30,7 +30,7 @@ public struct TextPartition(int start, int stop, string message)
             message = GetNewMessage(splitMessage, matchString, countSplit);
             parts.Add(new TextPartition(start, stop, mess));
         }
-
+        
         parts.Add(new TextPartition(0, 0, message));
         return parts;
     }

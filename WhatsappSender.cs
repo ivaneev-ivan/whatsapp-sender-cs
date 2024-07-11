@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Text;
 using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.DeviceCommands;
 using AdvancedSharpAdbClient.Models;
@@ -22,11 +23,37 @@ public class WhatsappSender
     public static List<Worker> Workers = [];
     public static List<DeviceItem> Devices = [];
     private readonly AdbClient _client = new();
+    private List<string> _files = new List<string>();
+    private static Random _random = new Random();
 
+    private readonly string dataDir = "/sdcard/WhatsappSender/";
 
     public WhatsappSender()
     {
         StartAdb();
+    }
+
+    public void CopyDataDir(string path, DeviceData device)
+    {
+        using (SyncService service = new SyncService(device))
+        {
+            foreach (var file in Directory.GetFiles(path))
+            {
+                using (FileStream stream = File.OpenRead(file))
+                {
+                    var targerPath = dataDir + Path.GetFileName(file);
+                    _files.Add(targerPath);
+                    try
+                    {
+                        service.Push(stream, targerPath, 4, DateTimeOffset.Now, null);
+                    }
+                    catch (AdvancedSharpAdbClient.Exceptions.AdbException)
+                    {
+                        //
+                    }
+                }
+            }
+        }
     }
 
     public void InitDevices()
@@ -34,14 +61,14 @@ public class WhatsappSender
         // Devices = ConfigManager.GetDevicesFromConfig();
         // if (Devices.Count == 0)
         // {
-            Devices = GetAllDevicesToConfig();
-            if (Devices.Count == 0)
-            {
-                Console.WriteLine("Устройства не найдены");
-                return;
-            }
+        Devices = GetAllDevicesToConfig();
+        if (Devices.Count == 0)
+        {
+            Console.WriteLine("Устройства не найдены");
+            return;
+        }
 
-            ConfigManager.WriteDevicesToConfig(Devices);
+        ConfigManager.WriteDevicesToConfig(Devices);
         // }
 
         Console.WriteLine("Получил и записал список всех устройств");
@@ -90,7 +117,7 @@ public class WhatsappSender
         proc.Start();
         Console.WriteLine("ADB KILL");
     }
-    
+
     private static void StartAdb()
     {
         var fileName = GetAdbPath();
@@ -107,6 +134,7 @@ public class WhatsappSender
         {
             //
         }
+
         Thread.Sleep(1000);
     }
 
@@ -150,7 +178,17 @@ public class WhatsappSender
         Thread.Sleep(1000);
     }
 
-    private void SendTypeWordText(DeviceData device, string message)
+    private void sendRandomAttach(DeviceData device, string phone)
+    {
+        string imageAttach = "file://" + _files[_random.Next(_files.Count)];
+        string command =
+            $"am start -a android.intent.action.SEND -t  text/plain -e jid '{phone.Replace("+", "")}@s.whatsapp.net' --eu android.intent.extra.STREAM {imageAttach}  -p com.whatsapp.w4b";
+        _client.ExecuteRemoteCommand(command, device);
+        Thread.Sleep(2000);
+        SendImage(device);
+    }
+
+    private void SendTypeWordText(DeviceData device, string message, string phone)
     {
         var parts = TextPartition.GetTextPartition(message);
         foreach (var part in parts)
@@ -158,29 +196,38 @@ public class WhatsappSender
             var commandsParts = TextPartitionWithCommand.GetTextPartitionWithCommand(part);
             foreach (var textPartitionWithCommand in commandsParts)
             {
-                var words = textPartitionWithCommand.Message.Split(" ");
-                var i = 0;
-                foreach (var w in words)
+                var imageParts = textPartitionWithCommand.Message.Split("%img%");
+                foreach (var text in imageParts)
                 {
-                    var a = "";
-                    if (i + 1 != words.Count()) a = " ";
-                    SendText(device, w + a);
-                    i++;
-                }
-
-                ;
-                switch (textPartitionWithCommand.CommandType)
-                {
-                    case CommandType.NewMessage:
+                    if (text == imageParts[1])
+                    {
                         SendMessage(device);
-                        break;
-                    case CommandType.Enter:
-                        SendEnter(device);
-                        break;
-                    case CommandType.None:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                        sendRandomAttach(device, phone);
+                    }
+
+                    var words = text.Split(" ");
+                    var i = 0;
+                    foreach (var w in words)
+                    {
+                        var a = "";
+                        if (i + 1 != words.Count()) a = " ";
+                        SendText(device, w + a);
+                        i++;
+                    }
+
+                    switch (textPartitionWithCommand.CommandType)
+                    {
+                        case CommandType.NewMessage:
+                            SendMessage(device);
+                            break;
+                        case CommandType.Enter:
+                            SendEnter(device);
+                            break;
+                        case CommandType.None:
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
             }
 
@@ -196,6 +243,15 @@ public class WhatsappSender
     {
         var sendButton = _client.FindElement(device,
             "//node[@resource-id='com.whatsapp.w4b:id/conversation_entry_action_button']");
+        if (sendButton == null) throw new Exception("Кнопка для отправки не найдена");
+        sendButton.Click();
+        Thread.Sleep(1000);
+    }
+    
+    private void SendImage(DeviceData device)
+    {
+        var sendButton = _client.FindElement(device,
+            "//node[@resource-id='com.whatsapp.w4b:id/send']");
         if (sendButton == null) throw new Exception("Кнопка для отправки не найдена");
         sendButton.Click();
         Thread.Sleep(1000);
@@ -261,7 +317,7 @@ public class WhatsappSender
     {
         var messageBox = _client.FindElement(device, "//node[@resource-id='com.whatsapp.w4b:id/entry']",
             new TimeSpan(10 * 10000000));
-        if (messageBox == null) throw new Exception("Не удалось найти тект бокс");
+        if (messageBox == null) throw new MessageBoxNotFound("Не удалось найти тект бокс");
         messageBox.Click();
     }
 
@@ -295,11 +351,11 @@ public class WhatsappSender
         try
         {
             GetMessageBox(device);
-            SendTypeWordText(device, message);
+            SendTypeWordText(device, message, data.Phone);
             SendMessage(device);
             isSent = true;
         }
-        catch (Exception)
+        catch (MessageBoxNotFound)
         {
             //
         }
@@ -315,5 +371,12 @@ public class WhatsappSender
             {
                 Thread.Sleep(1000);
             }
+    }
+}
+
+class MessageBoxNotFound : Exception
+{
+    public MessageBoxNotFound(string message) : base(message)
+    {
     }
 }

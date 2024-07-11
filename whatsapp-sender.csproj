@@ -22,8 +22,16 @@
         <Content Include="platform-tools\*.*" CopyToOutputDirectory="PreserveNewest">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <Content Include="data\*.*" CopyToOutputDirectory="PreserveNewest">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
         <PackageReference Include="EPPlus" Version="7.0.5" />
         <PackageReference Include="libphonenumber-csharp" Version="8.13.27" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0-preview.6.24327.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="data\" />
     </ItemGroup>
     
 </Project>

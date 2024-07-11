@@ -13,12 +13,15 @@ internal static class Program
         return new Thread(() => StartSendingWithPhone(device, excelReader, phone, sender));
     }
 
-    private static void Main()
+    private static void Main(string[] args)
     {
         Console.InputEncoding = Encoding.UTF8;
         Console.OutputEncoding = Encoding.UTF8;
-        Console.WriteLine("0 - Сбросить клавиатуру и выйти\n1 - Начать рассылку");
-        var isReset = Console.ReadLine() == "1";
+        bool isSending = true;
+        if (args.Length > 0)
+        {
+            isSending = args[0] == "1";
+        }        
         Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e) {
             e.Cancel = true;
             keepRunning = false;
@@ -34,11 +37,7 @@ internal static class Program
                 UserData phone;
                 foreach (var client in WhatsappSender.Devices)
                 {
-                    if (!isReset)
-                    {
-                        whatsappSender.Close(whatsappSender.GetClient(client)!);
-                    }
-                    else
+                    if (isSending)
                     {
                         phone = ExcelReader.Phones.First();
                         ExcelReader.Phones.Remove(phone);
@@ -46,12 +45,15 @@ internal static class Program
                         WhatsappSender.Workers.Add(new Worker(client, thread));
                         thread.Start();
                     }
+                    else
+                    {
+                        whatsappSender.Close(whatsappSender.GetClient(client)!);
+                    }
                 }
-
-                if (!isReset)
+                if (!isSending)
                 {
                     Console.WriteLine("Клавиатура возращена");
-                    return;
+                    break;
                 }
                 while (ExcelReader.Phones.Count != 0 && WhatsappSender.Workers.Count != 0)
                 {
@@ -74,14 +76,10 @@ internal static class Program
                             //
                         }
                 }
-
                 if (WhatsappSender.Workers.Count == 0)
                 {
                     Console.WriteLine("Рассылка завершена");
-                    Console.WriteLine("Для закрытия консоли нажмите любую клавишу . . .");
                 }
-
-                Console.ReadLine();
                 break;
             }
             catch (SocketException)
@@ -114,7 +112,7 @@ internal static class Program
             ConfigManager.WriteDevicesToConfig(WhatsappSender.Devices);
             return;
         }
-
+        sender.CopyDataDir("D:\\code\\whatsapp-sender-cs\\data", client);
         var message = GetMessage(phone);
         Console.WriteLine(message);
         Console.Write($"\r{phone.Phone}: inprogress {device.ToString()} \r\n");
